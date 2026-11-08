@@ -1,8 +1,8 @@
 {
-  "name": "MISTIC",
-  "short_name": "MISTIC",
-  "description": "Mistyczna gra logiczna: obracaj okręgi, łącz elementy, zdobywaj wtajemniczenie",
-  "id": "mistic-game",
+  "name": "AZOTHRA",
+  "short_name": "AZOTHRA",
+  "description": "Alchemia · Transmutacja · Pierwotna siła — obracaj trzy kręgi, łącz elementy, poznawaj wtajemniczenie",
+  "id": "azothra-game",
   "start_url": "./?source=app",
   "scope": "./",
   "display": "fullscreen",

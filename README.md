@@ -1,4 +1,6 @@
-# MISTIC
+# AZOTHRA
+
+*The Essence of Transformation* · Alchemia · Transmutacja · Pierwotna siła
 
 Mistyczna gra logiczna: 3 przenikające się okręgi, obrót okręgu przesuwa elementy, 2 takie same łączą się (+1 poziom), 3 w rzędzie to Trójca (+2). Wyższe elementy = wyższy stopień wtajemniczenia.
 Prototyp HTML5, instalowalny na Androidzie jako aplikacja (PWA), działa offline.
