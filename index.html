@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
@@ -40,7 +40,7 @@ html,body{height:100%;overscroll-behavior:none;-webkit-touch-callout:none;backgr
 #over p{opacity:.8;line-height:1.6}
 .btn{border:1px solid #f3d79a;color:#f3d79a;background:none;border-radius:22px;padding:10px 26px;font:15px Georgia,serif;letter-spacing:.15em}
 #restart{position:fixed;right:12px;top:calc(env(safe-area-inset-top,0px) + 86px);font-size:11px;padding:5px 10px;opacity:.6}
-#rank{pointer-events:auto;cursor:pointer}#rank:after{content:'ⓘ ścieżka';font-size:9px;margin-top:3px;opacity:.6}
+#rank{pointer-events:auto;cursor:pointer}#rank:after{content:'ⓘ path';font-size:9px;margin-top:3px;opacity:.6}
 .modal{position:fixed;inset:0;background:#07050df0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;text-align:center;padding:20px;z-index:5}
 .modal h2{font-weight:normal;letter-spacing:.25em;color:#f3d79a;font-size:20px}
 .row{display:flex;gap:10px}
@@ -54,33 +54,39 @@ html,body{height:100%;overscroll-behavior:none;-webkit-touch-callout:none;backgr
 #tBtn{position:fixed;left:12px;top:calc(env(safe-area-inset-top,0px) + 120px);font-size:10px;padding:4px 9px;opacity:.6;display:block}
 #tlist{display:flex;flex-wrap:wrap;gap:5px;justify-content:center;max-width:420px;max-height:62vh;overflow:auto}#tlist .g{font-size:11px;padding:6px 9px}#tlist .g i{opacity:.5;font-style:normal;margin-left:4px}
 #ver{position:fixed;right:8px;bottom:calc(env(safe-area-inset-bottom,0px) + 4px);font:10px Georgia,serif;letter-spacing:.1em;color:#e9e2ff;opacity:.35;pointer-events:none}
+#gear{background:none;border:0;color:#d9ccff;opacity:.8;position:relative;padding:4px;pointer-events:auto}#gdot{position:absolute;right:2px;top:2px;width:8px;height:8px;border-radius:50%;background:#f3d79a;display:none;box-shadow:0 0 8px #f3d79a}
+.srow{display:flex;justify-content:space-between;align-items:center;width:220px;font-size:15px;letter-spacing:.1em}
+.vfly{position:fixed;pointer-events:none;z-index:4;transition:transform 1.5s cubic-bezier(.2,.7,.3,1),opacity 1.5s ease-in}
 #hint{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 64px);text-align:center;font-size:11px;opacity:.45;letter-spacing:.08em;pointer-events:none}
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <div class="hud" id="top">
-  <div class="box">Punkty<b id="score">0</b></div>
-  <div class="box" id="rank">Stopień<b id="rankN">Neofita</b><div id="prog"><i></i></div></div>
-  <div class="box">Następny<div id="next"></div></div>
+  <div class="box">Score<b id="score">0</b></div>
+  <div class="box" id="rank">Degree<b id="rankN">Neophyte</b><div id="prog"><i></i></div></div>
+  <div class="box"><button id="gear" aria-label="Settings"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/><circle cx="12" cy="12" r="6.5"/></svg><i id="gdot"></i></button></div>
 </div>
-<div id="hint">przeciągnij po okręgu · 3 w rzędzie = Trójca</div>
-<button class="btn" id="undo">↶ cofnij</button><button class="btn" id="restart">od nowa</button>
+<div id="hint">swipe along a circle · 3 in a row = Trinity</div>
+<button class="btn" id="undo">↶ undo</button>
 <div class="hud" id="bot"><div id="gifts"></div><div id="ladder"></div></div>
-<div id="banner"></div><button class="btn" id="upd">Nowa wersja · odśwież</button>
-<div class="modal" id="conf"><h2>NOWA GRA?</h2><p>Bieżąca gra zostanie skasowana.</p><div class="row"><button class="btn" id="cNo">Wróć</button><button class="btn" id="cYes">Zacznij od nowa</button></div></div>
-<div class="modal" id="bookM"><h2>KSIĘGA ELEMENTÓW</h2><div id="book" class="list"></div><div class="row"><button class="btn" id="bPath">Ścieżka</button><button class="btn" id="bClose">Zamknij</button></div></div>
-<div class="modal" id="pathM"><h2>ŚCIEŻKA WTAJEMNICZENIA</h2><div id="path"></div><div class="row"><button class="btn" id="pBook">Księga</button><button class="btn" id="pClose">Zamknij</button></div></div>
-<div class="modal" id="testM"><h2>PANEL TESTOWY</h2><div class="row"><button class="g" id="tvm">głos: męski</button><button class="g" id="tvf">głos: żeński</button></div><div id="tlist"></div><button class="btn" id="tClose">Zamknij</button></div>
+<div id="banner"></div>
+<div class="modal" id="conf"><h2>NEW GAME?</h2><p>Your current game will be lost.</p><div class="row"><button class="btn" id="cNo">Back</button><button class="btn" id="cYes">Start over</button></div></div>
+<div class="modal" id="bookM"><h2>BOOK OF ELEMENTS</h2><div id="book" class="list"></div><div class="row"><button class="btn" id="bPath">Path</button><button class="btn" id="bClose">Close</button></div></div>
+<div class="modal" id="pathM"><h2>PATH OF INITIATION</h2><div id="path"></div><div class="row"><button class="btn" id="pBook">Book</button><button class="btn" id="pClose">Close</button></div></div>
+<div class="modal" id="testM"><h2>TEST PANEL</h2><div class="row"><button class="g" id="tvm">voice: male</button><button class="g" id="tvf">voice: female</button></div><div id="tlist"></div><button class="btn" id="tClose">Close</button></div>
 <button class="btn" id="tBtn">TEST</button><div id="ver"></div>
-<div id="over"><h1>ZASTÓJ</h1><p id="ovT"></p><button class="btn" id="again">Od nowa</button><button class="btn" id="ovUndo">↶ Cofnij ruch</button></div>
+<div id="over"><h1>STILLNESS</h1><p id="ovT"></p><button class="btn" id="again">New game</button><button class="btn" id="ovUndo">↶ Undo move</button></div>
+<div class="modal" id="setM"><h2 style="font-size:28px;letter-spacing:.35em">AZOTHRA</h2><p style="opacity:.7;font-style:italic;margin-top:-6px">The Essence of Transformation</p>
+<div class="srow"><span>Sound</span><button class="g" id="sSfx"></button></div><div class="srow"><span>Voice</span><button class="g" id="sVoice"></button></div>
+<button class="btn" id="sNew">New game</button><p id="sVer" style="opacity:.55;font-size:12px;letter-spacing:.15em"></p><button class="btn" id="upd" style="display:none">Update available · reload</button><button class="btn" id="sClose">Close</button></div>
 <script>
 'use strict';
 // ===== Dane =====
-const NAMES=['','Pył','Kropla','Iskra','Płomień','Kamień','Kryształ','Oko','Księżyc','Słońce','Gwiazda','Pieczęć','Monada'];
+const NAMES=['','Dust','Drop','Spark','Flame','Stone','Crystal','Eye','Moon','Sun','Star','Seal','Monad'];
 const COL=['','#9a9fbd','#5fb4e8','#f2e27a','#ff7a3d','#c79a62','#6fe8d2','#b77cff','#d6e0ff','#ffc23d','#ff6fb5','#ff4d5e','#ffffff'];
-const RANKS=[{n:'Neofita',lv:1},{n:'Adept',lv:4},{n:'Mistyk',lv:6},{n:'Wtajemniczony',lv:8},{n:'Mag',lv:10},{n:'Arcymistrz',lv:11}];
-const GIFTS=[{id:'vision',n:'Wizja',passive:1,d:'podgląd 3 kolejnych elementów (stały)'},{id:'swap',n:'Transmutacja',d:'zamiana miejscami 2 pól'},{id:'purge',n:'Oczyszczenie',d:'usunięcie 1 elementu'},{id:'hold',n:'Zatrzymanie',d:'ruch bez nowego elementu'},{id:'eter',n:'Eter',d:'następny element łączy się z każdym'}];
+const RANKS=[{n:'Neophyte',k:'neofita',lv:1},{n:'Adept',k:'adept',lv:4},{n:'Mystic',k:'mistyk',lv:6},{n:'Initiate',k:'wtajemniczony',lv:8},{n:'Magus',k:'mag',lv:10},{n:'Archmaster',k:'arcymistrz',lv:11}];
+const GIFTS=[{id:'vision',n:'Vision',passive:1,d:'tap to glimpse the next element (unlimited)'},{id:'swap',n:'Transmutation',d:'swap any 2 fields'},{id:'purge',n:'Purification',d:'remove 1 element'},{id:'hold',n:'Stasis',d:'a move with no new element'},{id:'eter',n:'Aether',d:'the next element merges with anything'}];
 const RINGCOL=['#f3d79a','#b77cff','#6fe8d2'];
 const SLOTS=12, STEP=Math.PI*2/SLOTS, ETER=-1, MAXLV=12;
 // ===== Geometria: 3 okręgi R=1, d=√2 → 30 pól, 6 węzłów wspólnych =====
@@ -116,17 +122,17 @@ function stuck(){if(board.some(x=>!x))return false;
   for(let r=0;r<3;r++)for(const d of[1,-1]){const nb=rotated(board,r,d);for(let a=0;a<N;a++)for(const c of adj[a])if(canMerge(nb[a],nb[c]))return false}return true}
 // ===== Wydarzenia / świętowanie =====
 // [poziom 0=S 1=M 2=L 3=XL 4=XXL, tytuł, podtytuł, liczba wariantów głosu]
-const EV={start_first:[2,'Witaj, wędrowcze','obróć okrąg, połącz dwa takie same',2],start:[1,'AZOTHRA','The Essence of Transformation',3],restart:[0,'','',2],undo:[0,'','',0],
- merge:[0,'','',0],eter_merge:[1,'Eter','piąty żywioł połączył się',2],chain2:[1,'Łańcuch ×2','',4],chain3:[2,'Łańcuch ×3','dary odnowione',4],chain4:[3,'Łańcuch ×{c}','dary odnowione',3],drought:[0,'','',3],
- trinity_first:[3,'Pierwsza Trójca','trzy połączone w jedno · +2 poziomy',1],trinity:[2,'TRÓJCA','{el}',4],trinity_node:[3,'WĘZEŁ TRÓJCY','{el} · trzy drogi się spotkały',3],revelation:[2,'Objawienie','trzecia Trójca · dary odnowione',3],
- ascension:[4,'Wniebowstąpienie','dwie Monady powróciły do źródła',2],ascension_trinity:[4,'Wniebowstąpienie Trójcy','trzy Monady powróciły do źródła',1],
- gift_swap:[1,'Transmutacja','',2],gift_purge:[1,'Oczyszczenie','',2],gift_hold:[1,'Zatrzymanie','czas wstrzymał oddech',2],gift_eter:[1,'Eter przywołany','',2],gifts_recharged:[1,'Dary odnowione','',2],
- danger:[1,'Zagrożenie','zostały dwa wolne pola',3],last_slot:[1,'Ostatnie pole','',2],saved:[2,'Ocalenie','okręgi znów oddychają',3],
- best_beaten:[2,'Nowy rekord','przekroczyłeś własną granicę',3],over:[2,'','',3],over_best:[3,'','',3],over_near:[2,'','',3],over_undo:[0,'','',2]};
+const EV={start_first:[2,'Welcome, wanderer','turn a circle · join two alike',2],start:[1,'AZOTHRA','The Essence of Transformation',3],restart:[0,'','',2],undo:[0,'','',0],
+ merge:[0,'','',0],eter_merge:[1,'Aether','the fifth element has joined',2],chain2:[1,'Chain ×2','',4],chain3:[2,'Chain ×3','gifts renewed',4],chain4:[3,'Chain ×{c}','gifts renewed',3],drought:[0,'','',3],
+ trinity_first:[3,'First Trinity','three become one · +2 levels',1],trinity:[2,'TRINITY','{el}',4],trinity_node:[3,'TRINITY KNOT','{el} · three paths meet',3],revelation:[2,'Revelation','third Trinity · gifts renewed',3],
+ ascension:[4,'Ascension','two Monads return to the source',2],ascension_trinity:[4,'Trinity Ascension','three Monads return to the source',1],
+ gift_swap:[1,'Transmutation','',2],gift_purge:[1,'Purification','',2],gift_hold:[1,'Stasis','time holds its breath',2],gift_eter:[1,'Aether summoned','',2],gifts_recharged:[1,'Gifts renewed','',2],
+ danger:[1,'Danger','only two free fields left',3],last_slot:[1,'Last field','',2],saved:[2,'Saved','the circles breathe again',3],
+ best_beaten:[2,'New record','you crossed your own limit',3],over:[2,'','',3],over_best:[3,'','',3],over_near:[2,'','',3],over_undo:[0,'','',2]};
 const NEWT=[0,0,0,0,1,1,1,2,2,2,3,3,4],DISCT=[0,0,0,1,2,2,2,3,3,3,3,4,4];
-for(let l=3;l<=MAXLV;l++){const k=String(l).padStart(2,'0');EV['new_'+k]=[NEWT[l],'Nowy element',NAMES[l],l<12?2:2];EV['discover_'+k]=[DISCT[l],'Odkrycie',NAMES[l]+' · wpis do Księgi',2]}
-[['adept',1],['mistyk',2],['wtajemniczony',3],['mag',4],['arcymistrz',5]].forEach(([k,i])=>EV['rank_'+k]=[i===5?4:3,'Stopień: '+RANKS[i].n,'nowy dar: '+GIFTS[i-1].n,2]);
-[1,5,10,25,50,100].forEach(t=>EV['score_'+t+'k']=[1,t*1000+' punktów','',1]);
+for(let l=3;l<=MAXLV;l++){const k=String(l).padStart(2,'0');EV['new_'+k]=[NEWT[l],'New element',NAMES[l],2];EV['discover_'+k]=[DISCT[l],'Discovery',NAMES[l]+' · added to the Book',2]}
+[['adept',1],['mistyk',2],['wtajemniczony',3],['mag',4],['arcymistrz',5]].forEach(([k,i])=>EV['rank_'+k]=[i===5?4:3,'Degree: '+RANKS[i].n,'new gift: '+GIFTS[i-1].n,2]);
+[1,5,10,25,50,100].forEach(t=>EV['score_'+t+'k']=[1,t*1000+' points','',1]);
 let META;try{META=JSON.parse(localStorage.getItem('azothra_meta'))||{}}catch(e){META={}}
 const saveMeta=()=>{try{localStorage.setItem('azothra_meta',JSON.stringify(META))}catch(e){}};
 let pend=[],VOICE='m',lastVoice=0,sflash=0,sflashT=0,drought=0,dangerOn=false,lastSlotSaid=false,beat=false,bestAtStart=0;
@@ -140,7 +146,7 @@ function runEv({id,d,t},first){const[,ti,su]=EV[id];const fill=x=>x.replace('{el
   if(t>=3){sflash=performance.now();sflashT=t;[0,1,2].forEach(i=>setTimeout(()=>tone(130.8*[1,1.5,2][i],1.6,.07),i*120));buzz(t>=4?[60,60,60,60,120]:[40,40,60])}
   voice(id,t)}
 const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3};
-function voice(id,t){const n=VFILES[id]||0;if(!n)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
+function voice(id,t){const n=VFILES[id]||0;if(!n||!VOX)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
   try{const a=new Audio(`voice/${VOICE}/${id}_${1+(Math.random()*n|0)}.mp3`);a.volume=.9;a.play().catch(()=>{})}catch(e){}}
 function afterMove(c){if(c)drought=0;else if(++drought===6)celebrate('drought');
   const em=board.filter(x=>!x).length;
@@ -165,7 +171,7 @@ function el(lv,n){return{id:uid++,lv,x:nodes[n].x,y:nodes[n].y,s:1,a:1}}
 function spawn(silent){let n=(planned!=null&&!board[planned])?planned:pickNode(queue[0]);if(n==null)return;
   const e=el(queue.shift(),n);board[n]=e;queue.push(gen());planned=pickNode(queue[0]);
   if(!silent){e.s=0;tween(220,t=>e.s=ease(t));}}
-async function move(r,dir){if(busy||over)return;save();busy=true;mode=null;swapA=null;buzz(6);tone(180,.05,.05);
+async function move(r,dir){if(busy||over)return;save();busy=true;mode=null;swapA=null;buzz(6);whoosh();
   const R=rings[r],items=[];R.slots.forEach((n,k)=>{if(board[n])items.push({e:board[n],k})});
   board=rotated(board,r,dir);
   await tween(200,t=>{const q=ease(t);items.forEach(({e,k})=>{const a=R.base+(k+dir*q)*STEP;e.x=R.cx+Math.cos(a);e.y=R.cy+Math.sin(a)})});
@@ -204,9 +210,9 @@ async function resolve(active){let last=null,combo=0;
 function snap(){board.forEach((e,n)=>{if(e){e.x=nodes[n].x;e.y=nodes[n].y;e.s=1;e.a=1}})}
 function checkRank(){let r=0;RANKS.forEach((k,i)=>{if(hi>=k.lv)r=i});
   while(rankIdx<r){rankIdx++;const g=GIFTS[rankIdx-1];charges[g.id]=g.passive?0:1;
-    celebrate('rank_'+RANKS[rankIdx].n.toLowerCase())}}
+    celebrate('rank_'+RANKS[rankIdx].k)}}
 function end(){over=true;const nb=score>best,near=!nb&&best>0&&score>=best*.9;celebrate(nb&&bestAtStart>0?'over_best':near?'over_near':'over');if(score>best){best=score;try{localStorage.setItem('azothra_best',best)}catch(e){}}
-  document.getElementById('ovT').innerHTML=`Punkty: ${score}<br>Rekord: ${best}<br>Najwyższy element: ${NAMES[hi]}<br>Stopień: ${RANKS[rankIdx].n}<br>Trójce: ${trinity}`;
+  document.getElementById('ovT').innerHTML=`Score: ${score}<br>Record: ${best}<br>Highest element: ${NAMES[hi]}<br>Degree: ${RANKS[rankIdx].n}<br>Trinities: ${trinity}`;
   setTimeout(()=>document.getElementById('over').style.display='flex',600)}
 // ===== Dary =====
 async function useGift(id){if(busy||over||!charges[id])return;
@@ -228,33 +234,40 @@ function mini(lv,sz){const c=document.createElement('canvas');const d=devicePixe
   const x=c.getContext('2d');x.scale(d,d);drawEl(x,sz/2,sz/2,sz*.42,lv,1,performance.now());return c}
 function ui(){$('undo').disabled=!hist.length;$('score').textContent=score;$('rankN').textContent=RANKS[rankIdx].n;
   const nx=RANKS[rankIdx+1];$('prog').firstChild.style.width=nx?Math.min(100,(hi-RANKS[rankIdx].lv)/(nx.lv-RANKS[rankIdx].lv)*100)+'%':'100%';
-  const nq=$('next');nq.innerHTML='';const cnt=rankIdx>=1?3:1;queue.slice(0,cnt).forEach((l,i)=>nq.appendChild(mini(l,i?18:28)));
+  
   const g=$('gifts');g.innerHTML='';GIFTS.forEach((d,i)=>{if(i>=rankIdx)return;const b=document.createElement('button');
-    b.className='g'+(d.passive?' on':(!charges[d.id]?' off':''))+((mode===d.id||(d.id==='hold'&&holdNext))?' on':'');
-    b.innerHTML=d.n+(d.passive?'':'<sup>'+charges[d.id]+'</sup>');if(!d.passive)b.onclick=()=>useGift(d.id);g.appendChild(b)});
+    b.className='g'+(d.passive?'':(!charges[d.id]?' off':''))+((mode===d.id||(d.id==='hold'&&holdNext))?' on':'');
+    b.innerHTML=d.n+(d.passive?'':'<sup>'+charges[d.id]+'</sup>');b.onclick=d.passive?(()=>vision(b)):(()=>useGift(d.id));g.appendChild(b)});
   const L=$('ladder');if(!L.children.length)for(let l=1;l<=MAXLV;l++){const c=mini(l,Math.floor(Math.min(36,(innerWidth-60)/12)));c.title=NAMES[l];L.appendChild(c)}
   [...L.children].forEach((c,i)=>c.classList.toggle('lit',i+1<=hi))}
-const DESC=['','Najmniejsza drobina materii. Od niej zaczyna się każda droga.','Woda życia. Pierwszy kształt, jaki przyjmuje pył.','Błysk świadomości, który budzi się w materii.','Alchemiczny ogień. Żywioł woli i przemiany.','Alchemiczna ziemia. Ugruntowanie: to, co trwa.','Światło uwięzione w porządku. Czystość i struktura.','Wewnętrzne widzenie. Odsłania to, co ukryte.','Intuicja, sen i odbicie. Światło, które przychodzi nocą.','Jasność umysłu. Życiodajne centrum, wokół którego krąży wszystko.','Przewodniczka wędrowca. Łączy niebo z drogą.','Heksagram. Jedność przeciwieństw: góra i dół, ogień i woda.','Pierwotna jedność, źródło i cel. Dwie Monady wracają do źródła.'];
+const DESC=['','The smallest grain of matter. Every path begins with it.','The water of life. The first shape dust takes.','A flash of awareness waking within matter.','Alchemical fire. The element of will and change.','Alchemical earth. Grounding: that which endures.','Light held in order. Purity and structure.','The inner sight. It reveals what is hidden.','Intuition, dream and reflection. The light that comes at night.','Clarity of mind. The living centre around which all turns.','The wanderer\'s guide. It joins the sky to the road.','The hexagram. Union of opposites: above and below, fire and water.','Primordial unity, source and goal. Two Monads return to the source.'];
 function showBook(){const B=$('book');B.innerHTML='';
   for(let l=1;l<=MAXLV;l++){const d=document.createElement('div');const got=l<=hi;d.className='st '+(got?'done':'lock');d.appendChild(mini(l,40));
-    const how=l===1?'pojawia się na planszy':l===2?'2× Pył':`2× ${NAMES[l-1]} · Trójca: 3× ${NAMES[l-2]}`;
-    const t=document.createElement('div');t.innerHTML=`<b>${NAMES[l]}</b><small>poz. ${l} · ${1<<l}</small><span class="d">${got?DESC[l]:'— jeszcze nieodkryty —'}</span><span>${how}</span>`;d.appendChild(t);B.appendChild(d)}
+    const how=l===1?'appears on the board':l===2?'2× Dust':`2× ${NAMES[l-1]} · Trinity: 3× ${NAMES[l-2]}`;
+    const t=document.createElement('div');t.innerHTML=`<b>${NAMES[l]}</b><small>lvl ${l} · ${1<<l}</small><span class="d">${got?DESC[l]:'— not yet discovered —'}</span><span>${how}</span>`;d.appendChild(t);B.appendChild(d)}
   const d=document.createElement('div');const got=rankIdx>=5;d.className='st '+(got?'done':'lock');d.appendChild(mini(ETER,40));
-  const t=document.createElement('div');t.innerHTML=`<b>Eter</b><small>piąty żywioł</small><span class="d">${got?'Łączy się z każdym elementem i podnosi go o 1 poziom.':'— jeszcze nieodkryty —'}</span><span>dar Arcymistrza</span>`;d.appendChild(t);B.appendChild(d);
+  const t=document.createElement('div');t.innerHTML=`<b>Aether</b><small>the fifth element</small><span class="d">${got?'Merges with any element and raises it by 1 level.':'— not yet discovered —'}</span><span>Archmaster\'s gift</span>`;d.appendChild(t);B.appendChild(d);
   $('pathM').style.display='none';$('bookM').style.display='flex'}
 function showPath(){$('bookM').style.display='none';const P=$('path');P.innerHTML='';
   RANKS.forEach((r,i)=>{const d=document.createElement('div');d.className='st '+(i<rankIdx?'done':i===rankIdx?'cur':'lock');
     const g=i?GIFTS[i-1]:null;d.appendChild(mini(r.lv,40));const t=document.createElement('div');
-    t.innerHTML=`<b>${i+1}. ${r.n}</b><span>${i?'próg: '+NAMES[r.lv]:'start'}${i===rankIdx?' · <i>obecny</i>':''}</span><span>${g?'dar: '+g.n+' — '+g.d:'brak daru'}</span>`;
+    t.innerHTML=`<b>${i+1}. ${r.n}</b><span>${i?'threshold: '+NAMES[r.lv]:'start'}${i===rankIdx?' · <i>current</i>':''}</span><span>${g?'gift: '+g.n+' — '+g.d:'no gift'}</span>`;
     d.appendChild(t);P.appendChild(d)});
   const f=document.createElement('div');f.className='st';f.appendChild(mini(MAXLV,40));const t=document.createElement('div');
-  t.innerHTML='<b>Cel: Monada</b><span>Trójca: 3 w rzędzie = +2 poziomy, ×3 pkt (w węźle ×9) · co 3. Trójca odnawia dary · łańcuch ≥3 odnawia dary</span>';
+  t.innerHTML='<b>Goal: Monad</b><span>Trinity: 3 in a row = +2 levels, ×3 pts (×9 on a knot) · every 3rd Trinity renews gifts · chain ≥3 renews gifts</span>';
   f.appendChild(t);P.appendChild(f);$('pathM').style.display='flex'}
+function vision(btn){if(over)return;const r=btn.getBoundingClientRect(),sz=44,c=mini(queue[0],sz);c.className='vfly';
+  c.style.left=(r.left+r.width/2-sz/2)+'px';c.style.top=(r.top-6)+'px';c.style.transform='translateY(10px) scale(.4)';c.style.opacity='1';document.body.appendChild(c);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{c.style.transform='translateY(-150px) scale(1.15)';c.style.opacity='0'}));setTimeout(()=>c.remove(),1600);tone(660,.4,.04);setTimeout(()=>tone(990,.5,.03),90)}
 let bT;function banner(t,s,dur=1600){const b=$('banner');b.innerHTML=t+(s?'<small>'+s+'</small>':'');b.style.opacity=1;clearTimeout(bT);bT=setTimeout(()=>b.style.opacity=0,dur)}
 function addFloat(e,t){floats.push({x:e.x,y:e.y,t,t0:performance.now()})}
 // ===== Dźwięk =====
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
-let AC;function tone(f,d,v){try{if(!AC)return;const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;
+let SFX=true,VOX=true;try{SFX=localStorage.getItem('azothra_sfx')!=='0';VOX=localStorage.getItem('azothra_vox')!=='0'}catch(e){}
+function whoosh(){try{if(!AC||!SFX)return;const n=AC.sampleRate*.32,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
+  const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;f.type='bandpass';f.Q.value=1.2;f.frequency.setValueAtTime(380,AC.currentTime);f.frequency.exponentialRampToValueAtTime(900,AC.currentTime+.28);
+  g.gain.value=.05;s.connect(f).connect(g).connect(AC.destination);s.start()}catch(e){}}
+let AC;function tone(f,d,v){try{if(!AC||!SFX)return;const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;
   g.gain.setValueAtTime(0,AC.currentTime);g.gain.linearRampToValueAtTime(v,AC.currentTime+.01);g.gain.exponentialRampToValueAtTime(.0001,AC.currentTime+d);
   o.connect(g).connect(AC.destination);o.start();o.stop(AC.currentTime+d)}catch(e){}}
 // ===== Rysowanie =====
@@ -308,7 +321,7 @@ function frame(now){
     ctx.globalAlpha=.4+.3*Math.sin(now/250);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,er*.8,0,7);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
   board.forEach((e,n)=>{if(!e)return;const[x,y]=P(e.x,e.y);drawEl(ctx,x,y,er*e.s,e.lv,e.a,now);
     if(n===swapA){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,er*1.2,0,7);ctx.stroke()}});
-  if(mode){ctx.fillStyle='#f3d79a';ctx.font='13px Georgia';ctx.textAlign='center';ctx.fillText(mode==='swap'?'Transmutacja: wskaż dwa pola':'Oczyszczenie: wskaż element',W/2,OY+S*(rc/2+1)+22)}
+  if(mode){ctx.fillStyle='#f3d79a';ctx.font='13px Georgia';ctx.textAlign='center';ctx.fillText(mode==='swap'?'Transmutation: pick two fields':'Purification: pick an element',W/2,OY+S*(rc/2+1)+22)}
   floats=floats.filter(f=>{const t=(now-f.t0)/900;if(t>1)return false;const[x,y]=P(f.x,f.y);ctx.globalAlpha=1-t;ctx.fillStyle='#fff';ctx.font='bold 14px Georgia';ctx.textAlign='center';ctx.fillText(f.t,x,y-er-10-t*30);ctx.globalAlpha=1;return true});
   {const st=Math.max(0,1-(now-sflash)/(sflashT>=4?1400:700));if(st>0){const g=ctx.createRadialGradient(W/2,OY,0,W/2,OY,Math.max(W,H)*.7);
     g.addColorStop(0,`rgba(255,240,200,${.45*st})`);g.addColorStop(1,`rgba(183,124,255,${.12*st})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}}
@@ -326,10 +339,15 @@ cv.addEventListener('pointermove',e=>{if(!drag||drag.done)return;const dx=e.clie
   drag.done=true;drag.ring=best.i;move(best.i,best.cr>0?1:-1);setTimeout(()=>drag=null,200)});
 addEventListener('pointerup',()=>{if(drag&&!drag.done)drag=null});
 addEventListener('keydown',e=>{if((e.key==='z'&&(e.metaKey||e.ctrlKey))||e.key==='Backspace'){undo();return}const k='123qwe'.indexOf(e.key.toLowerCase());if(k>=0)move(k%3,k<3?1:-1)});
-$('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};$('restart').onclick=()=>{if(!busy&&!over)$('conf').style.display='flex';else if(over)reset()};
+$('gear').onclick=()=>{setUI();$('setM').style.display='flex'};$('sClose').onclick=()=>$('setM').style.display='none';
+function setUI(){$('sSfx').textContent=SFX?'ON':'OFF';$('sSfx').className='g'+(SFX?' on':'');$('sVoice').textContent=VOX?'ON':'OFF';$('sVoice').className='g'+(VOX?' on':'');$('sVer').textContent='version '+VER}
+$('sSfx').onclick=()=>{SFX=!SFX;try{localStorage.setItem('azothra_sfx',SFX?'1':'0')}catch(e){}setUI()};
+$('sVoice').onclick=()=>{VOX=!VOX;try{localStorage.setItem('azothra_vox',VOX?'1':'0')}catch(e){}setUI()};
+$('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!busy)$('conf').style.display='flex'};
+$('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.7.0';$('ver').textContent='v'+VER;
+const VER='0.8.0';$('ver').textContent='v'+VER;
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
@@ -343,7 +361,7 @@ addEventListener('resize',resize);
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&AC&&AC.state==='suspended')AC.resume()});
 const APP_VERSION=VER;
 if('serviceWorker' in navigator&&location.protocol.startsWith('http')){navigator.serviceWorker.register('sw.js').catch(()=>{});
-  const chk=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(v=>{if(v.version!==APP_VERSION)$('upd').style.display='block'}).catch(()=>{});
+  const chk=()=>fetch('version.json?t='+Date.now(),{cache:'no-store'}).then(r=>r.json()).then(v=>{if(v.version!==APP_VERSION){$('upd').style.display='block';$('gdot').style.display='block';$('sVer').textContent='version '+VER+' · new: '+v.version}}).catch(()=>{});
   chk();setInterval(chk,15*60e3);document.addEventListener('visibilitychange',()=>{if(!document.hidden)chk()});
   $('upd').onclick=async()=>{try{const rs=await navigator.serviceWorker.getRegistrations();for(const r of rs)await r.unregister();const ks=await caches.keys();for(const k of ks)await caches.delete(k)}catch(e){}location.reload()}}resize();reset();requestAnimationFrame(frame);
 </script>
