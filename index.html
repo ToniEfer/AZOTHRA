@@ -136,7 +136,7 @@ for(let l=3;l<=MAXLV;l++){const k=String(l).padStart(2,'0');EV['new_'+k]=[NEWT[l
 [1,5,10,25,50,100].forEach(t=>EV['score_'+t+'k']=[1,t*1000+' points','',1]);
 let META;try{META=JSON.parse(localStorage.getItem('azothra_meta'))||{}}catch(e){META={}}
 const saveMeta=()=>{try{localStorage.setItem('azothra_meta',JSON.stringify(META))}catch(e){}};
-let pend=[],VOICE='m',lastVoice=0,sflash=0,sflashT=0,drought=0,dangerOn=false,lastSlotSaid=false,beat=false,bestAtStart=0;
+let pend=[],VOICE='m',lastVoice=-1e9,sflash=0,sflashT=0,drought=0,dangerOn=false,lastSlotSaid=false,beat=false,bestAtStart=0;
 try{VOICE=localStorage.getItem('azothra_voice')||'m'}catch(e){}
 function celebrate(id,d={}){if(!EV[id])return;pend.push({id,d,t:EV[id][0]});if(!busy)flush()}
 function flush(){if(!pend.length)return;pend.sort((a,b)=>b.t-a.t);const top=pend[0],seq=[top,...pend.slice(1).filter(e=>e.t>=3)];pend=[];
@@ -147,8 +147,12 @@ function runEv({id,d,t},first){const[,ti,su]=EV[id];const fill=x=>x.replace('{el
   if(t>=3){sflash=performance.now();sflashT=t;[0,1,2].forEach(i=>setTimeout(()=>tone(130.8*[1,1.5,2][i],1.6,.07),i*120));buzz(t>=4?[60,60,60,60,120]:[40,40,60])}
 }
 const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3};
-function voice(id,t){const n=VFILES[id]||0;if(!n||!VOX)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
-  try{const a=new Audio(`voice/${VOICE}/${id}_${1+(Math.random()*n|0)}.mp3`);a.volume=.9;a.play().catch(()=>{})}catch(e){}}
+const VBUF={};
+function loadV(k){if(!VBUF[k])VBUF[k]=fetch(`voice/${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AC.decodeAudioData(b,res,rej))).catch(()=>{delete VBUF[k];return null});return VBUF[k]}
+function preloadVoices(){if(!AC)return;Object.entries(VFILES).forEach(([id,n])=>{for(let i=1;i<=n;i++)loadV(VOICE+'/'+id+'_'+i)})}
+function voice(id,t){const n=VFILES[id]||0;if(!n||!VOX||!AC)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
+  if(AC.state==='suspended')AC.resume();
+  loadV(VOICE+'/'+id+'_'+(1+(Math.random()*n|0))).then(buf=>{if(!buf)return;const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=1;s.buffer=buf;s.connect(g).connect(AC.destination);s.start()})}
 function afterMove(c){if(c)drought=0;else if(++drought===6)celebrate('drought');
   const em=board.filter(x=>!x).length;
   if(!dangerOn&&em<=2&&em>0){dangerOn=true;lastSlotSaid=false;celebrate('danger')}
@@ -181,7 +185,7 @@ async function move(r,dir){if(busy||over)return;save();busy=true;mode=null;swapA
   afterMove(c);ui();if(stuck())end();busy=false;flush()}
 async function resolve(active){let last=null,combo=0;
   for(;;){const tr=findTriple(board,last,active);
-    if(tr){const[m,x,y]=tr,M=board[m],X=board[x],Y=board[y];combo++;const xs=[X.x,X.y],ys=[Y.x,Y.y];
+    if(tr){const[m,x,y]=tr,M=board[m],X=board[x],Y=board[y];combo++;const xs=[X.x,X.y],ys=[Y.x,Y.y];{const node=nodes[m].rings.length>1;buzz([20,40,20,40,30]);[0,1,2].forEach(i=>setTimeout(()=>tone(262*[1,1.25,1.5][i]*(node?2:1),.9,.08),i*70))}
       await tween(150,t=>{X.x=xs[0]+(M.x-xs[0])*t;X.y=xs[1]+(M.y-xs[1])*t;Y.x=ys[0]+(M.x-ys[0])*t;Y.y=ys[1]+(M.y-ys[1])*t;X.a=Y.a=1-t*.5});
       board[x]=board[y]=null;trinity++;flash=performance.now();
       const node=nodes[m].rings.length>1;
@@ -189,7 +193,6 @@ async function resolve(active){let last=null,combo=0;
       else{const nl=Math.min(MAXLV,M.lv+2);M.lv=nl;const pts=(1<<nl)*combo*(node?9:3);score+=pts;addFloat(M,'+'+pts+(node?' ×9':' ×3'));
         celebrate(node?'trinity_node':'trinity',{el:NAMES[nl]});if(!META.trinity){META.trinity=1;saveMeta();celebrate('trinity_first')}
         await tween(240,t=>M.s=1+.6*Math.sin(t*Math.PI));if(nl>hi){hi=nl;newEl(nl);checkRank()}}
-      buzz([20,40,20,40,30]);[0,1,2].forEach(i=>setTimeout(()=>tone(262*[1,1.25,1.5][i]*(node?2:1),.9,.08),i*90));
       if(trinity%3===0){GIFTS.forEach((g,i)=>{if(!g.passive&&i<rankIdx)charges[g.id]=Math.min(3,charges[g.id]+1)});celebrate('revelation')}
       last=board[m]?m:null;if(last!=null)active.add(m);continue}
     const p=findPair(board,last,active);if(!p)break;let[a,b]=p;
@@ -197,11 +200,11 @@ async function resolve(active){let last=null,combo=0;
     if(A.lv===ETER){tgt=b;src=a}else if(B.lv===ETER){tgt=a;src=b}
     else if(a===last){tgt=a;src=b}else if(active.has(a)&&!active.has(b)){tgt=b;src=a}else{tgt=a;src=b}
     const T=board[tgt],S=board[src],nl=(S.lv===ETER?T.lv:T.lv)+1;combo++;if(S.lv===ETER)celebrate('eter_merge');
+    if(nl<=MAXLV){tone(196*Math.pow(2,nl/5),.25,.09);buzz(12)}
     const sx=S.x,sy=S.y;await tween(120,t=>{S.x=sx+(T.x-sx)*t;S.y=sy+(T.y-sy)*t;S.a=1-t*.5});
     board[src]=null;
     if(nl>MAXLV){board[tgt]=null;const pts=1<<13;score+=pts*combo;celebrate('ascension');addFloat(T,'+'+pts*combo);tone(880,.6,.15);last=null;continue}
     T.lv=nl;const pts=(1<<nl)*combo;score+=pts;addFloat(T,'+'+pts+(combo>1?' ×'+combo:''));
-    tone(196*Math.pow(2,nl/5),.25,.09);buzz(12);
     await tween(160,t=>T.s=1+.35*Math.sin(t*Math.PI));
     if(nl>hi){hi=nl;newEl(nl);checkRank();}
     last=tgt;active.add(tgt)}
@@ -265,7 +268,7 @@ function addFloat(e,t){floats.push({x:e.x,y:e.y,t,t0:performance.now()})}
 // ===== Dźwięk =====
 const buzz=ms=>{try{navigator.vibrate&&navigator.vibrate(ms)}catch(e){}};
 let SFX=true,VOX=true;try{SFX=localStorage.getItem('azothra_sfx')!=='0';VOX=localStorage.getItem('azothra_vox')!=='0'}catch(e){}
-function whoosh(){try{if(!AC||!SFX)return;const n=AC.sampleRate*.32,b=AC.createBuffer(1,n,AC.sampleRate),d=b.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n);
+let WB;function whoosh(){try{if(!AC||!SFX)return;if(!WB){const n=AC.sampleRate*.32|0;WB=AC.createBuffer(1,n,AC.sampleRate);const d=WB.getChannelData(0);for(let i=0;i<n;i++)d[i]=(Math.random()*2-1)*Math.sin(Math.PI*i/n)}const b=WB;
   const s=AC.createBufferSource(),f=AC.createBiquadFilter(),g=AC.createGain();s.buffer=b;f.type='bandpass';f.Q.value=1.2;f.frequency.setValueAtTime(380,AC.currentTime);f.frequency.exponentialRampToValueAtTime(900,AC.currentTime+.28);
   g.gain.value=.05;s.connect(f).connect(g).connect(AC.destination);s.start()}catch(e){}}
 let AC;function tone(f,d,v){try{if(!AC||!SFX)return;const o=AC.createOscillator(),g=AC.createGain();o.type='sine';o.frequency.value=f;
@@ -330,7 +333,9 @@ function frame(now){
 // ===== Sterowanie =====
 let drag=null;
 function toB(e){return[(e.clientX-OX)/S,(e.clientY-OY)/S]}
-cv.addEventListener('pointerdown',e=>{if(!AC)try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(_){}
+function initAC(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)({latencyHint:'interactive'});preloadVoices()}catch(_){}}else if(AC.state==='suspended')AC.resume()}
+addEventListener('pointerdown',initAC,true);addEventListener('keydown',initAC,true);
+cv.addEventListener('pointerdown',e=>{
   const[x,y]=toB(e);
   if(mode){let bn=-1,bd=.3;nodes.forEach((n,i)=>{const d=Math.hypot(n.x-x,n.y-y);if(d<bd){bd=d;bn=i}});if(bn>=0)tapNode(bn);ui();return}
   const cand=rings.map((r,i)=>({i,d:Math.abs(Math.hypot(x-r.cx,y-r.cy)-1)})).filter(c=>c.d<.3);
@@ -348,13 +353,13 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.8.1';
+const VER='0.8.2';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
   const L=$('tlist');if(L.children.length)return;Object.keys(EV).forEach(id=>{const b=document.createElement('button');b.className='g';b.innerHTML=id+'<i>'+TL[EV[id][0]]+'</i>';
    b.onclick=()=>{$('testM').style.display='none';celebrate(id,{el:NAMES[9],c:5});setTimeout(()=>$('testM').style.display='flex',EV[id][0]>=3?2800:1800)};L.appendChild(b)})}
- const setV=v=>{VOICE=v;try{localStorage.setItem('azothra_voice',v)}catch(e){}testUI()};$('tvm').onclick=()=>setV('m');$('tvf').onclick=()=>setV('f');
+ const setV=v=>{VOICE=v;try{localStorage.setItem('azothra_voice',v)}catch(e){}preloadVoices();testUI()};$('tvm').onclick=()=>setV('m');$('tvf').onclick=()=>setV('f');
  $('tBtn').onclick=()=>{testUI();$('testM').style.display='flex'};$('tClose').onclick=()=>$('testM').style.display='none';
  let taps=0,tt;document.querySelector('#top .box').addEventListener('pointerdown',()=>{clearTimeout(tt);tt=setTimeout(()=>taps=0,600);if(++taps>=5){$('tBtn').style.display='block';taps=0}});
  document.querySelector('#top .box').style.pointerEvents='auto';
