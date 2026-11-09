@@ -116,7 +116,7 @@ const CIRC=[
   ['Phoenix','#dc8a14','phoenix','Rebirth from the ashes. Death and resurrection.'],
   ['Monad','#f3efe4','monad','Primordial unity, the trophy of RUBEDO. Source and goal.']]}];
 const AZOTH=['Azoth','#c4952a','azoth','The Philosopher\'s Stone. The universal principle of transformation: the end and the beginning.'];
-let circ=0,trophies=0,trophyAt=null,lockRing=-1,lockLeft=0,mc=0;
+let undoLeft=3,circ=0,trophies=0,trophyAt=null,lockRing=-1,lockLeft=0,mc=0;
 const nm=(lv,ci=circ)=>lv===99?AZOTH[0]:(CIRC[ci].el[lv-1]||[''])[0];
 const NAMES=new Proxy({},{get:(_,k)=>nm(+k)}),COL=new Proxy({},{get:(_,k)=>+k===99?AZOTH[1]:(CIRC[circ].el[+k-1]||['','#888'])[1]});
 const RANKS=[{n:'Neophyte',k:'neofita',lv:1},{n:'Adept',k:'adept',lv:4},{n:'Mystic',k:'mistyk',lv:7},{n:'Initiate',k:'wtajemniczony',lv:11},{n:'Magus',k:'mag',lv:14},{n:'Archmaster',k:'arcymistrz',lv:18}];
@@ -138,7 +138,7 @@ rings.forEach(r=>r.slots.forEach((n,k)=>{const m=r.slots[(k+1)%SLOTS];adj[n].add
 let hist=[],trinity,flash=0,board,score,best,hi,rankIdx,queue,planned,charges,holdNext,mode,swapA,busy,over,uid,floats,pulse;
 try{best=+localStorage.getItem('azothra_best')||0}catch(e){best=0}
 // trudność kręgu: rozkład nowych elementów, szansa 2. elementu, Slag, Eclipse [co ile ruchów, na ile], start
-const DIFF=[{p:[.65,1],x:.3,slag:0,ecl:0,el:0,st:3},{p:[.5,.8,1],x:.55,slag:.15,ecl:15,el:2,st:5},{p:[.4,.7,1],x:.8,slag:.25,ecl:9,el:3,st:7}];
+const DIFF=[{p:[.55,1],x:1,slag:0,ecl:0,el:0,st:4,u:3},{p:[.5,.85,1],x:1.2,slag:.2,ecl:12,el:2,st:6,u:2},{p:[.4,.75,1],x:1.5,slag:.25,ecl:8,el:3,st:8,u:1}];
 function gen(){const r=Math.random(),p=DIFF[circ].p;for(let i=0;i<p.length;i++)if(r<p[i])return i+1;return 1}
 const full=()=>!board.some(x=>!x);
 function reset(){board=Array(N).fill(null);score=0;hi=1;rankIdx=0;charges={};GIFTS.forEach(g=>charges[g.id]=0);
@@ -146,7 +146,7 @@ function reset(){board=Array(N).fill(null);score=0;hi=1;rankIdx=0;charges={};GIF
   circ=0;trophies=0;trophyAt=null;
   document.getElementById('over').style.display='none';busy=true;
   startCircle().then(()=>{busy=false;if(!META.played){META.played=1;saveMeta();celebrate('start_first')}else celebrate('start')})}
-async function startCircle(){board=Array(N).fill(null);hi=1;hist=[];lockRing=-1;lockLeft=0;mc=0;$('ladder').innerHTML='';
+async function startCircle(){board=Array(N).fill(null);hi=1;hist=[];undoLeft=DIFF[circ].u;lockRing=-1;lockLeft=0;mc=0;$('ladder').innerHTML='';
   queue=[gen(),gen(),gen()];planned=null;ui();await playIntro(circ);for(let i=0;i<DIFF[circ].st;i++)spawn(true);planned=pickNode(queue[0]);ui()}
 async function completeCircle(){const n=trophyAt;trophyAt=null;const T=board[n];hist=[];mode=null;swapA=null;
   celebrate('trophy_'+(circ+1));
@@ -161,16 +161,16 @@ async function finale(){over=true;META.azoth=1;saveMeta();await playFinale();}
 // ===== Reguły =====
 const canMerge=(a,b)=>a&&b&&a.lv!==SLAG&&b.lv!==SLAG&&((a.lv===b.lv&&a.lv>0)||((a.lv===ETER)!==(b.lv===ETER)));
 function dissolve(n){for(const m of adj[n]){const e=board[m];if(e&&e.lv===SLAG){board[m]=null;tween(300,t=>{e.s=1-t;e.a=1-t}).then(()=>{});floats.push({x:e.x,y:e.y,t:'dissolved',t0:performance.now()});tone(330,.3,.04)}}}
-function findPair(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));for(let n=0;n<N;n++)ord.push(n);
+function findPair(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));
   for(const a of ord)for(const c of adj[a])if(canMerge(b[a],b[c]))return[a,c];return null}
-function findTriple(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));for(let n=0;n<N;n++)ord.push(n);
+function findTriple(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));
   const seen=new Set();for(const a of ord){for(const m of [a,...adj[a]]){if(seen.has(m))continue;seen.add(m);const M=b[m];if(!M||M.lv<1)continue;
     const nb=[...adj[m]].filter(x=>b[x]&&b[x].lv===M.lv);if(nb.length>=2)return[m,nb[0],nb[1]]}}return null}
 function pickNode(lv){const e=[];for(let n=0;n<N;n++)if(!board[n])e.push(n);if(!e.length)return null;
   const safe=e.filter(n=>![...adj[n]].some(m=>canMerge(board[m],{lv})));const p=safe.length?safe:e;return p[Math.random()*p.length|0]}
 function rotated(b,r,dir){const nb=b.slice(),s=rings[r].slots;s.forEach((n,k)=>nb[s[(k+dir+SLOTS)%SLOTS]]=b[n]);return nb}
 function stuck(){if(board.some(x=>!x))return false;
-  for(let r=0;r<3;r++)for(const d of[1,-1]){const nb=rotated(board,r,d);for(let a=0;a<N;a++)for(const c of adj[a])if(canMerge(nb[a],nb[c]))return false}return true}
+  for(let r=0;r<3;r++)for(const d of[1,-1]){const nb=rotated(board,r,d);for(const a of rings[r].slots)for(const c of adj[a])if(canMerge(nb[a],nb[c]))return false}return true}
 // ===== Wydarzenia / świętowanie =====
 // [poziom 0=S 1=M 2=L 3=XL 4=XXL, tytuł, podtytuł, liczba wariantów głosu]
 const EV={start_first:[2,'Welcome, wanderer','turn a circle · join two alike',2],start:[1,'AZOTHRA','The Essence of Transformation',3],restart:[0,'','',2],undo:[0,'','',0],
@@ -218,7 +218,7 @@ function newEl(nl){const G=circ*7+nl,k=String(G).padStart(2,'0');celebrate('new_
   if(G>(META.disc||2)){META.disc=G;saveMeta();celebrate('discover_'+k,{el:NAMES[nl]})}}
 // ===== Cofanie =====
 function save(){hist.push({b:board.map(e=>e&&e.lv),score,hi,rankIdx,queue:queue.slice(),planned,charges:{...charges},holdNext,trinity});if(hist.length>20)hist.shift()}
-function undo(){if(busy||!hist.length)return;const h=hist.pop();board=h.b.map((l,n)=>l==null?null:el(l,n));
+function undo(){if(busy||!hist.length||!undoLeft)return;undoLeft--;const h=hist.pop();board=h.b.map((l,n)=>l==null?null:el(l,n));
   ({score,hi,rankIdx,planned,holdNext,trinity}=h);queue=h.queue;charges=h.charges;mode=null;swapA=null;over=false;
   $('over').style.display='none';tone(140,.15,.06);ui()}
 // ===== Animacje =====
@@ -237,7 +237,7 @@ async function move(r,dir){if(busy||over)return;if(r===lockRing){tone(110,.25,.0
   await tween(200,t=>{const q=ease(t);items.forEach(({e,k})=>{const a=R.base+(k+dir*q)*STEP;e.x=R.cx+Math.cos(a);e.y=R.cy+Math.sin(a)})});
   snap();const c=await resolve(new Set(R.slots));
   if(trophyAt!=null){await completeCircle();busy=false;flush();return}
-  if(holdNext)holdNext=false;else{spawn();if(Math.random()<DIFF[circ].x)spawn()}
+  if(holdNext)holdNext=false;else{const x=DIFF[circ].x,k=1+(x|0)+(Math.random()<x%1?1:0);for(let i=0;i<k;i++)spawn()}
   const D=DIFF[circ];if(D.ecl){if(lockLeft>0&&--lockLeft===0)lockRing=-1;if(++mc%D.ecl===0&&lockRing<0){lockRing=Math.random()*3|0;lockLeft=D.el;celebrate('eclipse')}}
   afterMove(c);ui();if(full()||stuck())end();busy=false;flush()}
 async function resolve(active){let last=null,combo=0;
@@ -294,7 +294,7 @@ async function tapNode(n){if(busy)return;
 const $=id=>document.getElementById(id);
 function mini(lv,sz,ci=circ){const c=document.createElement('canvas');const d=devicePixelRatio||1;c.width=c.height=sz*d;c.style.width=c.style.height=sz+'px';
   const x=c.getContext('2d');x.scale(d,d);drawEl(x,sz/2,sz/2,sz*.42,lv,1,performance.now(),ci);return c}
-function ui(){$('undo').disabled=!hist.length;$('score').textContent=score;$('rankN').textContent=RANKS[rankIdx].n;
+function ui(){$('undo').disabled=!hist.length||!undoLeft;$('undo').textContent='↶ undo · '+undoLeft;$('ovUndo').style.display=hist.length&&undoLeft?'':'none';$('score').textContent=score;$('rankN').textContent=RANKS[rankIdx].n;
   const nx=RANKS[rankIdx+1];$('prog').firstChild.style.width=nx?Math.min(100,(circ*7+hi-RANKS[rankIdx].lv)/(nx.lv-RANKS[rankIdx].lv)*100)+'%':'100%';
   
   const g=$('gifts');g.innerHTML='';GIFTS.forEach((d,i)=>{if(i>=rankIdx)return;const b=document.createElement('button');
@@ -466,7 +466,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.10.0';
+const VER='0.11.0';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
