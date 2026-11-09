@@ -92,30 +92,30 @@ html,body{height:100%;overscroll-behavior:none;-webkit-touch-callout:none;backgr
 // ===== Dane =====
 const CIRC=[
  {id:'I',name:'NIGREDO',sub:'The Circle of Matter',ring:['#a99bd6','#7d6fb0','#c9ad7e'],bg:['#1a1030','#05030a'],el:[
-  ['Dust','#9a9fbd','dust','Prima materia, the first matter. Every path begins with it.'],
-  ['Water','#5fb4e8','water','The element of flow and dissolution. The first shape dust takes.'],
-  ['Air','#cfe8ff','air','The element of breath and spirit. It lifts what water has softened.'],
-  ['Fire','#ff7a3d','fire','The element of will and change. It burns away what is not essential.'],
-  ['Earth','#c79a62','earth','The element of form. Grounding: that which endures.'],
-  ['Salt','#e8e4dc','salt','The principle of the body. The four elements made solid.'],
-  ['Black Sun','#b9a6ff','blacksun','Sol Niger, the trophy of NIGREDO. The old form dies so the new can be born.']]},
+  ['Dust','#5d5870','dust','Prima materia, the first matter. Every path begins with it.'],
+  ['Water','#1f6cb8','water','The element of flow and dissolution. The first shape dust takes.'],
+  ['Air','#c29a1f','air','The element of breath and spirit. It lifts what water has softened.'],
+  ['Fire','#d1452b','fire','The element of will and change. It burns away what is not essential.'],
+  ['Earth','#3d8a4a','earth','The element of form. Grounding: that which endures.'],
+  ['Salt','#b8558a','salt','The principle of the body. The four elements made solid.'],
+  ['Black Sun','#0e0b14','blacksun','Sol Niger, the trophy of NIGREDO. The old form dies so the new can be born.']]},
  {id:'II',name:'ALBEDO',sub:'The Circle of Metals',ring:['#dfe7ff','#a9bde0','#f2f6ff'],bg:['#111a2e','#03050b'],el:[
-  ['Lead','#8e8e9a','lead','Metal of Saturn. Heavy, dark, the first matter of the metals.'],
-  ['Tin','#b8c2c8','tin','Metal of Jupiter. Expansion and order.'],
-  ['Iron','#c06a4a','iron','Metal of Mars. Courage, strength and struggle.'],
-  ['Copper','#4fc3a1','copper','Metal of Venus. Harmony, love and beauty.'],
-  ['Quicksilver','#d8e0ff','mercury','Metal of Mercury. The messenger, the spirit that moves between all things.'],
-  ['Silver','#eef2ff','silver','Metal of the Moon. Purity, reflection, the white stone.'],
-  ['Gold','#ffc23d','gold','Metal of the Sun, the trophy of ALBEDO. Lead perfected into light.']]},
+  ['Lead','#4c5260','lead','Metal of Saturn. Heavy, dark, the first matter of the metals.'],
+  ['Tin','#2a8c9e','tin','Metal of Jupiter. Expansion and order.'],
+  ['Iron','#b3372b','iron','Metal of Mars. Courage, strength and struggle.'],
+  ['Copper','#3b9a68','copper','Metal of Venus. Harmony, love and beauty.'],
+  ['Quicksilver','#7656c2','mercury','Metal of Mercury. The messenger, the spirit that moves between all things.'],
+  ['Silver','#2f4686','silver','Metal of the Moon. Purity, reflection, the white stone.'],
+  ['Gold','#c9900f','gold','Metal of the Sun, the trophy of ALBEDO. Lead perfected into light.']]},
  {id:'III',name:'RUBEDO',sub:'The Circle of Spirit',ring:['#ff7a7a','#ff9a2e','#f3d79a'],bg:['#2a0d16','#080205'],el:[
-  ['Eye','#b77cff','eye','The inner sight. It reveals what is hidden.'],
-  ['Star','#ff6fb5','star','The wanderer\'s guide. It joins the sky to the road.'],
-  ['Seal','#ff4d5e','seal','The hexagram. Union of opposites: above and below, fire and water.'],
-  ['Pelican','#ff8f6b','pelican','The bird that feeds its young with its own blood. Sacrifice and devotion.'],
-  ['Red Lion','#e8343f','lion','Purified strength. The tamed fire of the soul.'],
-  ['Phoenix','#ff9a2e','phoenix','Rebirth from the ashes. Death and resurrection.'],
-  ['Monad','#ffffff','monad','Primordial unity, the trophy of RUBEDO. Source and goal.']]}];
-const AZOTH=['Azoth','#ffe9a8','azoth','The Philosopher\'s Stone. The universal principle of transformation: the end and the beginning.'];
+  ['Eye','#6638b0','eye','The inner sight. It reveals what is hidden.'],
+  ['Star','#2466c0','star','The wanderer\'s guide. It joins the sky to the road.'],
+  ['Seal','#c22d69','seal','The hexagram. Union of opposites: above and below, fire and water.'],
+  ['Pelican','#2a8a77','pelican','The bird that feeds its young with its own blood. Sacrifice and devotion.'],
+  ['Red Lion','#a81c28','lion','Purified strength. The tamed fire of the soul.'],
+  ['Phoenix','#dc8a14','phoenix','Rebirth from the ashes. Death and resurrection.'],
+  ['Monad','#f3efe4','monad','Primordial unity, the trophy of RUBEDO. Source and goal.']]}];
+const AZOTH=['Azoth','#c4952a','azoth','The Philosopher\'s Stone. The universal principle of transformation: the end and the beginning.'];
 let circ=0,trophies=0,trophyAt=null,lockRing=-1,lockLeft=0,mc=0;
 const nm=(lv,ci=circ)=>lv===99?AZOTH[0]:(CIRC[ci].el[lv-1]||[''])[0];
 const NAMES=new Proxy({},{get:(_,k)=>nm(+k)}),COL=new Proxy({},{get:(_,k)=>+k===99?AZOTH[1]:(CIRC[circ].el[+k-1]||['','#888'])[1]});
@@ -372,11 +372,14 @@ function resize(){DPR=devicePixelRatio||1;W=innerWidth;H=innerHeight;cv.width=W*
 const P=(x,y)=>[OX+x*S,OY+y*S];
 function poly(c,x,y,r,n,rot){c.beginPath();for(let i=0;i<n;i++){const a=rot+i*Math.PI*2/n;c.lineTo(x+Math.cos(a)*r,y+Math.sin(a)*r)}c.closePath()}
 function star(c,x,y,r,n,inner,rot){c.beginPath();for(let i=0;i<n*2;i++){const a=rot+i*Math.PI/n,q=i%2?r*inner:r;c.lineTo(x+Math.cos(a)*q,y+Math.sin(a)*q)}c.closePath()}
+function shade(h,f){if(h[0]!=='#')return h;let n=parseInt(h.slice(1),16),r=n>>16,g=n>>8&255,b=n&255;const t=f<0?0:255,p=Math.abs(f);r=Math.round((t-r)*p+r);g=Math.round((t-g)*p+g);b=Math.round((t-b)*p+b);return'#'+((1<<24)+(r<<16)+(g<<8)+b).toString(16).slice(1)}
 function drawEl(c,x,y,r,lv,alpha,now,ci=circ){const E=lv===99?AZOTH:lv>0?CIRC[ci].el[lv-1]:null;
-  const col=lv===ETER?`hsl(${now/8%360},90%,75%)`:lv===SLAG?'#6e6676':E[1];const key=lv===ETER?'eter':lv===SLAG?'slag':E[2];c.save();c.globalAlpha=alpha;
-  if(lv!==SLAG){const g=c.createRadialGradient(x,y,r*.2,x,y,r*1.6);g.addColorStop(0,col);g.addColorStop(1,'rgba(0,0,0,0)');
-  c.globalAlpha=alpha*(lv===7||lv===99?.6:.35);c.fillStyle=g;c.beginPath();c.arc(x,y,r*1.6,0,7);c.fill();c.globalAlpha=alpha}
-  c.fillStyle=lv===SLAG?'#1c1a20':'#120d1f';c.strokeStyle=col;c.lineWidth=Math.max(1,r*.08);c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke();
+  const bgc=lv===ETER?`hsl(${now/8%360},70%,45%)`:lv===SLAG?'#2a2730':E[1];const key=lv===ETER?'eter':lv===SLAG?'slag':E[2];
+  const glow=key==='blacksun'?'#9b87ff':key==='monad'?'#fff6d0':bgc,col=key==='monad'?'#1a1426':'#fff';c.save();c.globalAlpha=alpha;
+  if(lv!==SLAG){const g=c.createRadialGradient(x,y,r*.6,x,y,r*1.7);g.addColorStop(0,glow);g.addColorStop(1,'rgba(0,0,0,0)');
+  c.globalAlpha=alpha*(lv===7||lv===99?.75:.4);c.fillStyle=g;c.beginPath();c.arc(x,y,r*1.7,0,7);c.fill();c.globalAlpha=alpha}
+  {const g=c.createRadialGradient(x-r*.35,y-r*.4,r*.1,x,y,r*1.05);g.addColorStop(0,shade(bgc,.28));g.addColorStop(1,shade(bgc,-.25));c.fillStyle=g}
+  c.strokeStyle=lv===SLAG?'#6e6676':'rgba(255,255,255,.92)';c.lineWidth=Math.max(1,r*.075);c.beginPath();c.arc(x,y,r,0,7);c.fill();c.stroke();
   c.fillStyle=col;c.strokeStyle=col;c.lineWidth=Math.max(1,r*.09);c.lineJoin='round';c.lineCap='round';const q=r*.55,P=Math.PI;
   const ln=(a,b,cc,d)=>{c.beginPath();c.moveTo(x+a*q,y+b*q);c.lineTo(x+cc*q,y+d*q);c.stroke()},ci2=(a,b,rr,f)=>{c.beginPath();c.arc(x+a*q,y+b*q,rr*q,0,7);f?c.fill():c.stroke()};
   switch(key){
@@ -387,13 +390,13 @@ function drawEl(c,x,y,r,lv,alpha,now,ci=circ){const E=lv===99?AZOTH:lv>0?CIRC[ci
   case 'earth':poly(c,x,y-q*.15,q,3,P/2);c.stroke();ln(-.6,-.15,.6,-.15);break;
   case 'salt':ci2(0,0,.8);ln(-.8,0,.8,0);break;
   case 'blacksun':for(let i=0;i<12;i++){const a=i*P/6,l=i%2?.85:1.05;c.beginPath();c.moveTo(x+Math.cos(a)*q*.7,y+Math.sin(a)*q*.7);c.lineTo(x+Math.cos(a)*q*l,y+Math.sin(a)*q*l);c.stroke()}
-    c.fillStyle='#000';ci2(0,0,.6,1);ci2(0,0,.6);break;
+    c.fillStyle='#000';ci2(0,0,.6,1);c.fillStyle=col;ci2(0,0,.6);break;
   case 'lead':ln(-.25,-1,-.25,.1);ln(-.6,-.62,.1,-.62);c.beginPath();c.moveTo(x-q*.25,y-q*.05);c.quadraticCurveTo(x+q*.55,y-q*.45,x+q*.35,y+q*.25);c.quadraticCurveTo(x+q*.2,y+q*.7,x+q*.6,y+q*.95);c.stroke();break;
   case 'tin':c.beginPath();c.moveTo(x-q*.65,y-q*.5);c.quadraticCurveTo(x-q*.1,y-q*1.05,x-q*.05,y-q*.4);c.lineTo(x-q*.65,y+q*.35);c.lineTo(x+q*.75,y+q*.35);c.stroke();ln(.3,-.8,.3,.95);break;
   case 'iron':ci2(-.2,.2,.5);ln(.16,-.16,.78,-.78);ln(.78,-.78,.32,-.78);ln(.78,-.78,.78,-.32);break;
   case 'copper':ci2(0,-.35,.45);ln(0,.1,0,1);ln(-.38,.58,.38,.58);break;
   case 'mercury':c.beginPath();c.arc(x,y-q*.95,q*.34,.1,P-.1);c.stroke();ci2(0,-.2,.36);ln(0,.16,0,1);ln(-.32,.6,.32,.6);break;
-  case 'silver':ci2(0,0,1,1);c.fillStyle='#120d1f';ci2(.45,-.2,.85,1);break;
+  case 'silver':ci2(0,0,1,1);c.fillStyle=shade(bgc,.05);ci2(.45,-.2,.85,1);break;
   case 'gold':ci2(0,0,.72);ci2(0,0,.17,1);for(let i=0;i<8;i++){const a=i*P/4+P/8;c.beginPath();c.moveTo(x+Math.cos(a)*q*.86,y+Math.sin(a)*q*.86);c.lineTo(x+Math.cos(a)*q*1.08,y+Math.sin(a)*q*1.08);c.stroke()}break;
   case 'eye':c.beginPath();c.moveTo(x-q,y);c.quadraticCurveTo(x,y-q*.9,x+q,y);c.quadraticCurveTo(x,y+q*.9,x-q,y);c.stroke();ci2(0,0,.3,1);break;
   case 'star':star(c,x,y,q,5,.42,-P/2);c.fill();break;
@@ -460,7 +463,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.9.0';
+const VER='0.9.1';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
