@@ -63,7 +63,7 @@ html,body{height:100%;overscroll-behavior:none;-webkit-touch-callout:none;backgr
 #finB{position:absolute;left:0;right:0;bottom:calc(env(safe-area-inset-bottom,0px) + 40px);display:none;flex-direction:column;align-items:center;gap:14px;text-align:center;line-height:1.6}
 .bh{font-weight:normal;color:#f3d79a;letter-spacing:.2em;font-size:13px;margin:10px 0 2px;text-align:left}.bh small{display:block;letter-spacing:.05em;opacity:.6;font-style:italic;font-size:11px}
 #ladder canvas.tro{opacity:.12}#ladder canvas.tro.lit{opacity:1}
-#hint{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 64px);text-align:center;font-size:11px;opacity:.45;letter-spacing:.08em;pointer-events:none}
+#hint{position:fixed;left:0;right:0;top:calc(env(safe-area-inset-top,0px) + 64px);text-align:center;font-size:11px;opacity:.7;letter-spacing:.06em;pointer-events:none}#hint .s1{color:#f3b36a}#hint .s2{color:#ff6b6b}
 </style>
 </head>
 <body>
@@ -73,7 +73,7 @@ html,body{height:100%;overscroll-behavior:none;-webkit-touch-callout:none;backgr
   <div class="box" id="rank">Degree<b id="rankN">Neophyte</b><div id="prog"><i></i></div></div>
   <div class="box"><button id="gear" aria-label="Settings"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="3.2"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/><circle cx="12" cy="12" r="6.5"/></svg><i id="gdot"></i></button></div>
 </div>
-<div id="hint">swipe along a circle · 3 in a row = Trinity</div>
+<div id="hint"></div>
 <button class="btn" id="undo">↶ undo</button>
 <div class="hud" id="bot"><div id="gifts"></div><div id="ladder"></div></div>
 <div id="banner"></div>
@@ -116,11 +116,12 @@ const CIRC=[
   ['Phoenix','#dc8a14','phoenix','Rebirth from the ashes. Death and resurrection.'],
   ['Monad','#f3efe4','monad','Primordial unity, the trophy of RUBEDO. Source and goal.']]}];
 const AZOTH=['Azoth','#c4952a','azoth','The Philosopher\'s Stone. The universal principle of transformation: the end and the beginning.'];
-let undoLeft=3,circ=0,trophies=0,trophyAt=null,lockRing=-1,lockLeft=0,mc=0;
+let stag=0,ent=0,entB=0,ess=0,eclWarn=-1,decay=null,dissT=0,riteSaid=false,circ=0,trophies=0,trophyAt=null,lockRing=-1,lockLeft=0,mc=0;
 const nm=(lv,ci=circ)=>lv===99?AZOTH[0]:(CIRC[ci].el[lv-1]||[''])[0];
 const NAMES=new Proxy({},{get:(_,k)=>nm(+k)}),COL=new Proxy({},{get:(_,k)=>+k===99?AZOTH[1]:(CIRC[circ].el[+k-1]||['','#888'])[1]});
 const RANKS=[{n:'Neophyte',k:'neofita',lv:1},{n:'Adept',k:'adept',lv:4},{n:'Mystic',k:'mistyk',lv:7},{n:'Initiate',k:'wtajemniczony',lv:11},{n:'Magus',k:'mag',lv:14},{n:'Archmaster',k:'arcymistrz',lv:18}];
-const GIFTS=[{id:'vision',n:'Vision',passive:1,d:'tap to glimpse the next element (unlimited)'},{id:'swap',n:'Transmutation',d:'swap any 2 fields'},{id:'purge',n:'Purification',d:'remove 1 element'},{id:'hold',n:'Stasis',d:'a move with no new element'},{id:'eter',n:'Aether',d:'the next element merges with anything'}];
+const GIFTS=[{id:'vision',n:'Vision',passive:1,d:'tap to glimpse the next element (free)'},{id:'swap',n:'Transmutation',d:'swap any 2 fields · 1 ✦'},{id:'purge',n:'Purification',d:'dissolve 1 Slag · 1 ✦'},{id:'hold',n:'Stasis',d:'a move with no new element · 1 ✦ · +10 Entropy'},{id:'eter',n:'Aether',d:'the next element merges with anything (not the Rite) · 1 ✦'}];
+const ESSMAX=5,STAGMAX=[5,5,4],RITE_LV=6;
 const gName=G=>nm((G-1)%7+1,Math.floor((G-1)/7)),gLv=G=>(G-1)%7+1,gCi=G=>Math.floor((G-1)/7);
 const CM=()=>[1,8,64][circ];
 const SLOTS=12, STEP=Math.PI*2/SLOTS, ETER=-1, SLAG=-2, MAXLV=7;
@@ -138,16 +139,16 @@ rings.forEach(r=>r.slots.forEach((n,k)=>{const m=r.slots[(k+1)%SLOTS];adj[n].add
 let hist=[],trinity,flash=0,board,score,best,hi,rankIdx,queue,planned,charges,holdNext,mode,swapA,busy,over,uid,floats,pulse;
 try{best=+localStorage.getItem('azothra_best')||0}catch(e){best=0}
 // trudność kręgu: rozkład nowych elementów, szansa 2. elementu, Slag, Eclipse [co ile ruchów, na ile], start
-const DIFF=[{p:[.55,1],x:1,slag:0,ecl:0,el:0,st:4,u:3},{p:[.5,.85,1],x:1.2,slag:.2,ecl:12,el:2,st:6,u:2},{p:[.4,.75,1],x:1.5,slag:.25,ecl:8,el:3,st:8,u:1}];
-function gen(){const r=Math.random(),p=DIFF[circ].p;for(let i=0;i<p.length;i++)if(r<p[i])return i+1;return 1}
+const DIFF=[{p:[.55,1],x:.9,slag:0,ecl:0,el:0,st:4},{p:[.5,.88,1],x:1,slag:.15,ecl:12,el:2,st:6},{p:[.5,1],x:1.2,slag:.2,ecl:8,el:3,st:8}];
+function gen(){let r=Math.random();if(ent>=70)r*=.7;const p=DIFF[circ].p;for(let i=0;i<p.length;i++)if(r<p[i])return i+1;return 1}
 const full=()=>!board.some(x=>!x);
-function reset(){board=Array(N).fill(null);score=0;hi=1;rankIdx=0;charges={};GIFTS.forEach(g=>charges[g.id]=0);
+function reset(){board=Array(N).fill(null);score=0;hi=1;rankIdx=0;ess=0;
   hist=[];trinity=0;drought=0;dangerOn=false;beat=false;bestAtStart=best;scoreHit=new Set();pend=[];holdNext=false;mode=null;swapA=null;busy=false;over=false;uid=0;floats=[];
   circ=0;trophies=0;trophyAt=null;
   document.getElementById('over').style.display='none';busy=true;
   startCircle().then(()=>{busy=false;if(!META.played){META.played=1;saveMeta();celebrate('start_first')}else celebrate('start')})}
-async function startCircle(){board=Array(N).fill(null);hi=1;hist=[];undoLeft=DIFF[circ].u;lockRing=-1;lockLeft=0;mc=0;$('ladder').innerHTML='';
-  queue=[gen(),gen(),gen()];planned=null;ui();await playIntro(circ);for(let i=0;i<DIFF[circ].st;i++)spawn(true);planned=pickNode(queue[0]);ui()}
+async function startCircle(){board=Array(N).fill(null);hi=1;hist=[];stag=0;entB=0;ent=0;eclWarn=-1;decay=null;dissT=0;riteSaid=false;lockRing=-1;lockLeft=0;mc=0;$('ladder').innerHTML='';
+  queue=[gen(),gen(),gen()];planned=null;ui();await playIntro(circ);for(let i=0;i<DIFF[circ].st;i++)spawn(true);planned=pickNode(queue[0]);calcEnt();ui()}
 async function completeCircle(){const n=trophyAt;trophyAt=null;const T=board[n];hist=[];mode=null;swapA=null;
   celebrate('trophy_'+(circ+1));
   const others=[];board.forEach((e,i)=>{if(e&&i!==n)others.push(e)});const st=others.map(e=>[e.x,e.y]);
@@ -159,12 +160,16 @@ async function completeCircle(){const n=trophyAt;trophyAt=null;const T=board[n];
   if(circ<2){circ++;await startCircle()}else await finale()}
 async function finale(){over=true;META.azoth=1;saveMeta();await playFinale();}
 // ===== Reguły =====
-const canMerge=(a,b)=>a&&b&&a.lv!==SLAG&&b.lv!==SLAG&&((a.lv===b.lv&&a.lv>0)||((a.lv===ETER)!==(b.lv===ETER)));
+const canMerge0=(a,b)=>a&&b&&a.lv!==SLAG&&b.lv!==SLAG&&((a.lv===b.lv&&a.lv>0)||((a.lv===ETER)!==(b.lv===ETER)));
 function dissolve(n){for(const m of adj[n]){const e=board[m];if(e&&e.lv===SLAG){board[m]=null;tween(300,t=>{e.s=1-t;e.a=1-t}).then(()=>{});floats.push({x:e.x,y:e.y,t:'dissolved',t0:performance.now()});tone(330,.3,.04)}}}
+// Rytuał: dwa elementy poziomu 6 łączą się tylko na węźle i kosztem 1 Esencji (Aether nie zastępuje rytuału)
+const isNode=n=>nodes[n].rings.length>1;
+function pairOK(b,a,c){const A=b[a],C=b[c];if(!canMerge0(A,C))return false;if((A.lv===ETER?C.lv:A.lv)>=RITE_LV){if(A.lv===ETER||C.lv===ETER)return false;return ess>=1&&(isNode(a)||isNode(c))}return true}
+const canMerge=canMerge0;
 function findPair(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));
-  for(const a of ord)for(const c of adj[a])if(canMerge(b[a],b[c]))return[a,c];return null}
+  for(const a of ord)for(const c of adj[a])if(pairOK(b,a,c))return[a,c];return null}
 function findTriple(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));
-  const seen=new Set();for(const a of ord){for(const m of [a,...adj[a]]){if(seen.has(m))continue;seen.add(m);const M=b[m];if(!M||M.lv<1)continue;
+  const seen=new Set();for(const a of ord){for(const m of [a,...adj[a]]){if(seen.has(m))continue;seen.add(m);const M=b[m];if(!M||M.lv<1||M.lv>4)continue;
     const nb=[...adj[m]].filter(x=>b[x]&&b[x].lv===M.lv);if(nb.length>=2)return[m,nb[0],nb[1]]}}return null}
 function pickNode(lv){const e=[];for(let n=0;n<N;n++)if(!board[n])e.push(n);if(!e.length)return null;
   const safe=e.filter(n=>![...adj[n]].some(m=>canMerge(board[m],{lv})));const p=safe.length?safe:e;return p[Math.random()*p.length|0]}
@@ -183,7 +188,7 @@ const EV={start_first:[2,'Welcome, wanderer','turn a circle · join two alike',2
 const NEWT=[0,0,0,0,1,1,2,0],DISCT=[0,0,1,1,2,2,3,0];
 for(let g=2;g<=21;g++){const lv=gLv(g);if(lv<2)continue;const k=String(g).padStart(2,'0');EV['new_'+k]=[NEWT[lv],'New element',gName(g),2];EV['discover_'+k]=[DISCT[lv],'Discovery',gName(g)+' · added to the Book',2]}
 EV.trophy_1=[4,'BLACK SUN','the first circle is complete · NIGREDO',1];EV.trophy_2=[4,'GOLD','the second circle is complete · ALBEDO',1];EV.trophy_3=[4,'MONAD','the third circle is complete · RUBEDO',1];
-EV.azoth=[4,'AZOTH','the Great Work is complete',1];EV.eclipse=[1,'Eclipse','a circle falls asleep',0];
+EV.azoth=[4,'AZOTH','the Great Work is complete',1];EV.essence=[1,'Essence ✦','the Trinity Knot condenses spirit',0];EV.rite=[2,'The Rite','two {el} on a shared node · 1 Essence',0];EV.rite_done=[3,'The Rite is fulfilled','',0];EV.stag_warn=[1,'Stillness approaches','one more move without a union',0];EV.eclipse_warn=[1,'Eclipse approaches','the dashed circle will fall asleep',0];EV.decay_warn=[1,'Dissolution','{el} begins to crumble',0];EV.decay=[1,'Decay','{el} lost a level',0];EV.eclipse=[1,'Eclipse','a circle falls asleep',0];
 [['adept',1],['mistyk',2],['wtajemniczony',3],['mag',4],['arcymistrz',5]].forEach(([k,i])=>EV['rank_'+k]=[i===5?4:3,'Degree: '+RANKS[i].n,'new gift: '+GIFTS[i-1].n,2]);
 [1,5,10,25,50,100].forEach(t=>EV['score_'+t+'k']=[1,t*1000+' points','',1]);
 let META;try{META=JSON.parse(localStorage.getItem('azothra_meta'))||{}}catch(e){META={}}
@@ -206,6 +211,16 @@ const VALIAS={trophy_3:'new_12',azoth:'ascension'};
 function voice(id,t){id=VALIAS[id]||id;const n=VFILES[id]||0;if(!n||!VOX||!AC)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
   if(AC.state==='suspended')AC.resume();
   loadV(VOICE+'/'+id+'_'+(1+(Math.random()*n|0))).then(buf=>{if(!buf)return;const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=1;s.buffer=buf;s.connect(g).connect(AC.destination);s.start()})}
+// ===== Entropia 0–100 =====
+function calcEnt(){const em=board.filter(x=>!x).length,sl=board.filter(x=>x&&x.lv===SLAG).length;
+  ent=Math.round(Math.max(0,Math.min(100,60*(1-em/N)+25*stag/STAGMAX[circ]+15*Math.min(1,sl/6)+entB)))}
+const entState=()=>ent>=70?2:ent>=40?1:0;
+async function entropyTick(){
+  if(decay){const dn=board.findIndex(x=>x&&x.id===decay.id);if(dn>=0)decay.n=dn;const e=board[decay.n];if(!e||e.id!==decay.id||e.lv<4){decay=null}else if(--decay.t<=0){decay=null;e.lv--;entB-=2;floats.push({x:e.x,y:e.y,t:'decay',t0:performance.now()});tone(98,.6,.08);buzz([30,30,30]);await tween(260,t=>e.s=1-.3*Math.sin(t*Math.PI));celebrate('decay',{el:NAMES[e.lv+1]})}}
+  if(entState()===2){if(++dissT>=3&&!decay&&circ>=1){const c=[];board.forEach((e,n)=>{if(e&&e.lv>=4&&e.lv<7)c.push(n)});if(c.length){c.sort((a,b)=>board[b].lv-board[a].lv);const n=c[0];decay={n,id:board[n].id,t:2};dissT=0;celebrate('decay_warn',{el:NAMES[board[n].lv]})}}}else dissT=0;
+  if(hi>=RITE_LV-1&&!riteSaid&&board.some(x=>x&&x.lv===RITE_LV)){riteSaid=true;celebrate('rite',{el:NAMES[RITE_LV]})}}
+function status(){const h=$('hint');if(!h)return;const sm=STAGMAX[circ],st=['Stable','Turbulence','Dissolution'][entState()];
+  h.innerHTML=`<span class="s${entState()}">Entropy ${ent} · ${st}</span> · Stillness ${'●'.repeat(stag)}${'○'.repeat(Math.max(0,sm-stag))} · Essence ${'✦'.repeat(ess)}${'·'.repeat(ESSMAX-ess)}`}
 function afterMove(c){if(c)drought=0;else if(++drought===6)celebrate('drought');
   const em=board.filter(x=>!x).length;
   if(!dangerOn&&em<=2&&em>0){dangerOn=true;lastSlotSaid=false;celebrate('danger')}
@@ -217,9 +232,9 @@ let scoreHit=new Set();
 function newEl(nl){const G=circ*7+nl,k=String(G).padStart(2,'0');celebrate('new_'+k,{el:NAMES[nl]});
   if(G>(META.disc||2)){META.disc=G;saveMeta();celebrate('discover_'+k,{el:NAMES[nl]})}}
 // ===== Cofanie =====
-function save(){hist.push({b:board.map(e=>e&&e.lv),score,hi,rankIdx,queue:queue.slice(),planned,charges:{...charges},holdNext,trinity});if(hist.length>20)hist.shift()}
-function undo(){if(busy||!hist.length||!undoLeft)return;undoLeft--;const h=hist.pop();board=h.b.map((l,n)=>l==null?null:el(l,n));
-  ({score,hi,rankIdx,planned,holdNext,trinity}=h);queue=h.queue;charges=h.charges;mode=null;swapA=null;over=false;
+function save(){hist.push({b:board.map(e=>e&&e.lv),score,hi,rankIdx,queue:queue.slice(),planned,ess,stag,entB,holdNext,trinity});if(hist.length>3)hist.shift()}
+function undo(){if(busy||!hist.length||ess<1)return;const h=hist.pop();board=h.b.map((l,n)=>l==null?null:el(l,n));
+  ({score,hi,rankIdx,planned,holdNext,trinity}=h);queue=h.queue;ess=Math.max(0,h.ess-1);stag=h.stag;entB=h.entB;decay=null;calcEnt();mode=null;swapA=null;over=false;
   $('over').style.display='none';tone(140,.15,.06);ui()}
 // ===== Animacje =====
 const tweens=[];const ease=t=>t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;
@@ -229,7 +244,7 @@ function el(lv,n){return{id:uid++,lv,x:nodes[n].x,y:nodes[n].y,s:1,a:1}}
 function spawn(silent){let n=(planned!=null&&!board[planned])?planned:pickNode(queue[0]);if(n==null)return;
   const e=el(queue.shift(),n);board[n]=e;queue.push(gen());planned=pickNode(queue[0]);
   if(!silent){e.s=0;tween(220,t=>e.s=ease(t));
-    if(Math.random()<DIFF[circ].slag){const em=[];for(let i=0;i<N;i++)if(!board[i]&&i!==planned)em.push(i);
+    if(Math.random()<DIFF[circ].slag*(ent>=40?1.6:1)+(ent>=40&&!circ?.06:0)){const em=[];for(let i=0;i<N;i++)if(!board[i]&&i!==planned)em.push(i);
       if(em.length>3){const m=em[Math.random()*em.length|0],z=el(SLAG,m);z.s=0;board[m]=z;tween(260,t=>z.s=ease(t))}}}}
 async function move(r,dir){if(busy||over)return;if(r===lockRing){tone(110,.25,.06);buzz(30);floats.push({x:rings[r].cx,y:rings[r].cy,t:'eclipsed',t0:performance.now()});return}save();busy=true;mode=null;swapA=null;buzz(6);whoosh();
   const R=rings[r],items=[];R.slots.forEach((n,k)=>{if(board[n])items.push({e:board[n],k})});
@@ -237,9 +252,14 @@ async function move(r,dir){if(busy||over)return;if(r===lockRing){tone(110,.25,.0
   await tween(200,t=>{const q=ease(t);items.forEach(({e,k})=>{const a=R.base+(k+dir*q)*STEP;e.x=R.cx+Math.cos(a);e.y=R.cy+Math.sin(a)})});
   snap();const c=await resolve(new Set(R.slots));
   if(trophyAt!=null){await completeCircle();busy=false;flush();return}
-  if(holdNext)holdNext=false;else{const x=DIFF[circ].x,k=1+(x|0)+(Math.random()<x%1?1:0);for(let i=0;i<k;i++)spawn()}
-  const D=DIFF[circ];if(D.ecl){if(lockLeft>0&&--lockLeft===0)lockRing=-1;if(++mc%D.ecl===0&&lockRing<0){lockRing=Math.random()*3|0;lockLeft=D.el;celebrate('eclipse')}}
-  afterMove(c);ui();if(full()||stuck())end();busy=false;flush()}
+  if(holdNext)holdNext=false;else{const x=DIFF[circ].x+(ent<20?.3:0),k=1+(x|0)+(Math.random()<x%1?1:0);for(let i=0;i<k;i++)spawn()}
+  const D=DIFF[circ];if(D.ecl){if(lockLeft>0&&--lockLeft===0)lockRing=-1;++mc;
+    if(eclWarn>=0){lockRing=eclWarn;eclWarn=-1;lockLeft=D.el;celebrate('eclipse')}
+    else if((mc+1)%D.ecl===0&&lockRing<0){eclWarn=Math.random()*3|0;celebrate('eclipse_warn')}}
+  if(c)stag=0;else if(board.filter(x=>x).length>=N*.35){stag++;if(stag===STAGMAX[circ]-1)celebrate('stag_warn')}
+  if(!c)entB+=3;entB=Math.max(-25,Math.min(40,entB));if(entB>0)entB--;calcEnt();
+  await entropyTick();
+  afterMove(c);ui();if(full()||stag>=STAGMAX[circ])end();busy=false;flush()}
 async function resolve(active){let last=null,combo=0;
   for(;;){const tr=findTriple(board,last,active);
     if(tr){const[m,x,y]=tr,M=board[m],X=board[x],Y=board[y];combo++;const xs=[X.x,X.y],ys=[Y.x,Y.y];{const node=nodes[m].rings.length>1;buzz([20,40,20,40,30]);[0,1,2].forEach(i=>setTimeout(()=>tone(262*[1,1.25,1.5][i]*(node?2:1),.9,.08),i*70))}
@@ -247,59 +267,61 @@ async function resolve(active){let last=null,combo=0;
       board[x]=board[y]=null;trinity++;flash=performance.now();
       const node=nodes[m].rings.length>1;
       if(M.lv>=MAXLV){board[m]=null;const pts=(1<<14)*combo;score+=pts;addFloat(M,'+'+pts);celebrate('ascension_trinity')}
-      else{const nl=Math.min(MAXLV,M.lv+2);M.lv=nl;dissolve(m);const pts=(1<<nl)*combo*(node?9:3)*CM();score+=pts;addFloat(M,'+'+pts+(node?' ×9':' ×3'));
+      else{const nl=Math.min(5,M.lv+2);M.lv=nl;dissolve(m);entB-=node?8:5;if(node){ess=Math.min(ESSMAX,ess+1);celebrate('essence')}const pts=(1<<nl)*combo*(node?9:3)*CM();score+=pts;addFloat(M,'+'+pts+(node?' ×9':' ×3'));
         celebrate(node?'trinity_node':'trinity',{el:NAMES[nl]});if(!META.trinity){META.trinity=1;saveMeta();celebrate('trinity_first')}
         await tween(240,t=>M.s=1+.6*Math.sin(t*Math.PI));if(nl>hi){hi=nl;newEl(nl);checkRank()}if(nl===MAXLV){trophyAt=m;break}}
-      if(trinity%3===0){GIFTS.forEach((g,i)=>{if(!g.passive&&i<rankIdx)charges[g.id]=Math.min(3,charges[g.id]+1)});celebrate('revelation')}
+      if(trinity%3===0){ess=Math.min(ESSMAX,ess+1);celebrate('revelation')}
       last=board[m]?m:null;if(last!=null)active.add(m);continue}
     const p=findPair(board,last,active);if(!p)break;let[a,b]=p;
     let tgt,src;const A=board[a],B=board[b];
     if(A.lv===ETER){tgt=b;src=a}else if(B.lv===ETER){tgt=a;src=b}
     else if(a===last){tgt=a;src=b}else if(active.has(a)&&!active.has(b)){tgt=b;src=a}else{tgt=a;src=b}
+    if(board[tgt].lv>=RITE_LV&&!isNode(tgt)){[tgt,src]=[src,tgt]}
+    const rite=board[tgt].lv>=RITE_LV&&board[src].lv>=RITE_LV;if(rite){ess--;celebrate('rite_done')}
     const T=board[tgt],S=board[src],nl=(S.lv===ETER?T.lv:T.lv)+1;combo++;if(S.lv===ETER)celebrate('eter_merge');
     if(nl<=MAXLV){tone(196*Math.pow(2,nl/5),.25,.09);buzz(12)}
     const sx=S.x,sy=S.y;await tween(120,t=>{S.x=sx+(T.x-sx)*t;S.y=sy+(T.y-sy)*t;S.a=1-t*.5});
     board[src]=null;
     if(nl>MAXLV){board[tgt]=null;const pts=1<<13;score+=pts*combo;celebrate('ascension');addFloat(T,'+'+pts*combo);tone(880,.6,.15);last=null;continue}
-    T.lv=nl;dissolve(tgt);const pts=(1<<nl)*combo*CM();score+=pts;addFloat(T,'+'+pts+(combo>1?' ×'+combo:''));
+    T.lv=nl;dissolve(tgt);entB-=2;const pts=(1<<nl)*combo*CM();score+=pts;addFloat(T,'+'+pts+(combo>1?' ×'+combo:''));
     await tween(160,t=>T.s=1+.35*Math.sin(t*Math.PI));
     if(nl>hi){hi=nl;newEl(nl);checkRank();}
     if(nl===MAXLV){trophyAt=tgt;break}
     last=tgt;active.add(tgt)}
-  if(combo>=3){GIFTS.forEach((g,i)=>{if(!g.passive&&i<rankIdx)charges[g.id]=Math.min(3,charges[g.id]+1)})}
+  if(combo>=3){ess=Math.min(ESSMAX,ess+1);entB-=3}
   if(combo===2)celebrate('chain2');else if(combo===3)celebrate('chain3');else if(combo>=4)celebrate('chain4',{c:combo});
   return combo}
 function snap(){board.forEach((e,n)=>{if(e){e.x=nodes[n].x;e.y=nodes[n].y;e.s=1;e.a=1}})}
 function checkRank(){let r=0;RANKS.forEach((k,i)=>{if(circ*7+hi>=k.lv)r=i});
-  while(rankIdx<r){rankIdx++;const g=GIFTS[rankIdx-1];charges[g.id]=g.passive?0:1;
+  while(rankIdx<r){rankIdx++;ess=Math.min(ESSMAX,ess+1);
     celebrate('rank_'+RANKS[rankIdx].k)}}
 function end(){over=true;const nb=score>best,near=!nb&&best>0&&score>=best*.9;celebrate(nb&&bestAtStart>0?'over_best':near?'over_near':'over');if(score>best){best=score;try{localStorage.setItem('azothra_best',best)}catch(e){}}
   document.getElementById('ovT').innerHTML=`Score: ${score}<br>Record: ${best}<br>Circle: ${CIRC[circ].id} · ${CIRC[circ].name}<br>Highest element: ${NAMES[hi]}<br>Degree: ${RANKS[rankIdx].n}<br>Trinities: ${trinity}`;
   setTimeout(()=>document.getElementById('over').style.display='flex',600)}
 // ===== Dary =====
-async function useGift(id){if(busy||over||!charges[id])return;
+async function useGift(id){if(busy||over||ess<1)return;
   if(id==='swap'||id==='purge'){mode=mode===id?null:id;swapA=null}
-  else if(id==='hold'){if(holdNext)return;save();holdNext=true;celebrate('gift_hold');charges.hold--}
-  else if(id==='eter'){save();celebrate('gift_eter');queue[0]=ETER;planned=pickNode(ETER);charges.eter--}
+  else if(id==='hold'){if(holdNext)return;save();holdNext=true;celebrate('gift_hold');ess--;entB+=10;calcEnt()}
+  else if(id==='eter'){save();celebrate('gift_eter');queue[0]=ETER;planned=pickNode(ETER);ess--}
   ui()}
 async function tapNode(n){if(busy)return;
-  if(mode==='purge'){const e=board[n];if(!e)return;save();busy=true;charges.purge--;mode=null;celebrate('gift_purge');await tween(250,t=>{e.s=1-t;e.a=1-t});board[n]=null;busy=false;ui();flush();return}
+  if(mode==='purge'){const e=board[n];if(!e||e.lv!==SLAG)return;save();busy=true;ess--;mode=null;celebrate('gift_purge');await tween(250,t=>{e.s=1-t;e.a=1-t});board[n]=null;busy=false;ui();flush();return}
   if(mode==='swap'){if(swapA==null){if(board[n])swapA=n;return}
-    if(n===swapA){swapA=null;return}save();busy=true;const a=swapA;swapA=null;mode=null;charges.swap--;celebrate('gift_swap');
+    if(n===swapA){swapA=null;return}save();busy=true;const a=swapA;swapA=null;mode=null;ess--;celebrate('gift_swap');
     [board[a],board[n]]=[board[n],board[a]];const ea=board[a],en=board[n];
     const fa=ea&&{x:ea.x,y:ea.y},fn=en&&{x:en.x,y:en.y};
     await tween(220,t=>{const q=ease(t);if(ea){ea.x=fa.x+(nodes[a].x-fa.x)*q;ea.y=fa.y+(nodes[a].y-fa.y)*q}if(en){en.x=fn.x+(nodes[n].x-fn.x)*q;en.y=fn.y+(nodes[n].y-fn.y)*q}});
-    snap();await resolve(new Set([a,n]));if(trophyAt!=null){await completeCircle();busy=false;flush();return}ui();if(full()||stuck())end();busy=false;flush()}}
+    snap();await resolve(new Set([a,n]));if(trophyAt!=null){await completeCircle();busy=false;flush();return}ui();if(full())end();busy=false;flush()}}
 // ===== UI =====
 const $=id=>document.getElementById(id);
 function mini(lv,sz,ci=circ){const c=document.createElement('canvas');const d=devicePixelRatio||1;c.width=c.height=sz*d;c.style.width=c.style.height=sz+'px';
   const x=c.getContext('2d');x.scale(d,d);drawEl(x,sz/2,sz/2,sz*.42,lv,1,performance.now(),ci);return c}
-function ui(){$('undo').disabled=!hist.length||!undoLeft;$('undo').textContent='↶ undo · '+undoLeft;$('ovUndo').style.display=hist.length&&undoLeft?'':'none';$('score').textContent=score;$('rankN').textContent=RANKS[rankIdx].n;
+function ui(){$('undo').disabled=!hist.length||ess<1;$('undo').textContent='↶ reverse · ✦';$('ovUndo').style.display=hist.length&&ess>=1?'':'none';$('ovUndo').textContent='↶ Reverse (1 ✦)';status();$('score').textContent=score;$('rankN').textContent=RANKS[rankIdx].n;
   const nx=RANKS[rankIdx+1];$('prog').firstChild.style.width=nx?Math.min(100,(circ*7+hi-RANKS[rankIdx].lv)/(nx.lv-RANKS[rankIdx].lv)*100)+'%':'100%';
   
   const g=$('gifts');g.innerHTML='';GIFTS.forEach((d,i)=>{if(i>=rankIdx)return;const b=document.createElement('button');
-    b.className='g'+(d.passive?'':(!charges[d.id]?' off':''))+((mode===d.id||(d.id==='hold'&&holdNext))?' on':'');
-    b.innerHTML=d.n+(d.passive?'':'<sup>'+charges[d.id]+'</sup>');b.onclick=d.passive?(()=>vision(b)):(()=>useGift(d.id));g.appendChild(b)});
+    b.className='g'+(d.passive?'':(ess<1?' off':''))+((mode===d.id||(d.id==='hold'&&holdNext))?' on':'');
+    b.innerHTML=d.n+(d.passive?'':'<sup>✦</sup>');b.onclick=d.passive?(()=>vision(b)):(()=>useGift(d.id));g.appendChild(b)});
   const L=$('ladder'),lz=Math.floor(Math.min(36,(innerWidth-70)/11));if(!L.children.length){for(let l=1;l<=MAXLV;l++){const c=mini(l,lz);c.title=NAMES[l];L.appendChild(c)}
     const sp=document.createElement('span');sp.style.width='10px';L.appendChild(sp);for(let i=0;i<3;i++){const c=mini(7,lz,i);c.className='tro';c.title=nm(7,i);L.appendChild(c)}}
   [...L.children].forEach((c,i)=>{if(i<MAXLV)c.classList.toggle('lit',i+1<=hi);else if(c.className.startsWith('tro'))c.classList.toggle('lit',i-MAXLV-1<trophies)})}
@@ -307,7 +329,7 @@ const DESC=['','The smallest grain of matter. Every path begins with it.','The w
 function showBook(){const B=$('book');B.innerHTML='';const disc=Math.max(META.disc||2,circ*7+hi);
   const card=(ic,html,got)=>{const d=document.createElement('div');d.className='st '+(got?'done':'lock');d.appendChild(ic);const t=document.createElement('div');t.innerHTML=html;d.appendChild(t);B.appendChild(d)};
   CIRC.forEach((C,ci)=>{const h=document.createElement('h3');h.className='bh';h.innerHTML=`CIRCLE ${C.id} · ${C.name}<small>${C.sub}</small>`;B.appendChild(h);
-    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}`;
+    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):lv===7?`The Rite: 2× ${nm(6,ci)} on a shared node · 1 ✦`:lv===6?`2× ${nm(5,ci)} (no Trinity)`:`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}${lv===5?' or 3× '+nm(4,ci):''}`;
       card(mini(lv,40,ci),`<b>${E[0]}</b><small>${C.id} · ${lv}</small><span class="d">${got?E[3]:'— not yet discovered —'}</span><span>${how}${lv===7?' · trophy':''}</span>`,got)})});
   const h=document.createElement('h3');h.className='bh';h.innerHTML='THE GREAT WORK';B.appendChild(h);
   card(mini(99,40),`<b>${AZOTH[0]}</b><small>22</small><span class="d">${META.azoth?AZOTH[3]:'— not yet discovered —'}</span><span>Black Sun + Gold + Monad</span>`,!!META.azoth);
@@ -319,7 +341,7 @@ function showPath(){$('bookM').style.display='none';const P=$('path');P.innerHTM
     t.innerHTML=`<b>${i+1}. ${r.n}</b><span>${i?'threshold: '+gName(r.lv)+' (circle '+CIRC[gCi(r.lv)].id+')':'start'}${i===rankIdx?' · <i>current</i>':''}</span><span>${g?'gift: '+g.n+' — '+g.d:'no gift'}</span>`;
     d.appendChild(t);P.appendChild(d)});
   const f=document.createElement('div');f.className='st';f.appendChild(mini(99,40));const t=document.createElement('div');
-  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · each circle ends with its trophy · the three trophies unite into Azoth, the Philosopher\'s Stone</span><span>Trinity: 3 in a row = +2 levels · every 3rd Trinity and chain ≥3 renew gifts</span>';
+  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · each circle ends with its trophy · the three trophies unite into Azoth, the Philosopher\'s Stone</span><span>Trinity: 3 in a row = +2 levels (up to level 5) · the 7th element needs the Rite</span><span>Essence ✦ (max 5): Trinity Knot, every 3rd Trinity, chain ≥3, new degree · pays for gifts, Reversal and the Rite</span><span>Stillness: too many moves without a union ends the game (5/5/4, once the board is 35% full) · Entropy ≥40 Turbulence (more Slag) · ≥70 Dissolution (elements decay, circles II–III)</span>';
   f.appendChild(t);P.appendChild(f);$('pathM').style.display='flex'}
 function vision(btn){if(over)return;const r=btn.getBoundingClientRect(),sz=44,c=mini(queue[0],sz);c.className='vfly';
   c.style.left=(r.left+r.width/2-sz/2)+'px';c.style.top=(r.top-6)+'px';c.style.transform='translateY(10px) scale(.4)';c.style.opacity='1';document.body.appendChild(c);
@@ -421,7 +443,7 @@ function frame(now){
   const bg=ctx.createRadialGradient(W/2,OY,10,W/2,OY,Math.max(W,H)*.8);bg.addColorStop(0,CIRC[circ].bg[0]);bg.addColorStop(1,CIRC[circ].bg[1]);ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
   stars.forEach(s=>{ctx.globalAlpha=.3+.3*Math.sin(now/1500+s.p);ctx.fillStyle='#cfc2ff';ctx.beginPath();ctx.arc(s.x*W,s.y*H,s.r,0,7);ctx.fill()});ctx.globalAlpha=1;
   const empt=board.filter(x=>!x).length,danger=empt<=2&&!over;
-  rings.forEach((r,i)=>{const[x,y]=P(r.cx,r.cy);const RC=CIRC[circ].ring[i];ctx.strokeStyle=RC;if(i===lockRing)ctx.setLineDash([4,7]);
+  rings.forEach((r,i)=>{const[x,y]=P(r.cx,r.cy);const RC=CIRC[circ].ring[i];ctx.strokeStyle=RC;if(i===lockRing)ctx.setLineDash([4,7]);if(i===eclWarn)ctx.setLineDash([2,5]);
     const fl=Math.max(0,1-(now-flash)/700);ctx.globalAlpha=Math.min(1,(drag&&drag.ring===i?.9:.35)+(danger?.3*Math.sin(now/180):0)+fl*.65);ctx.lineWidth=drag&&drag.ring===i?3:1.5;
     ctx.shadowColor=danger?'#ff4d5e':RC;ctx.shadowBlur=danger?18:10;if(i===lockRing){ctx.globalAlpha=.15;ctx.shadowBlur=0}ctx.beginPath();ctx.arc(x,y,S,0,7);ctx.stroke();ctx.setLineDash([])});
   ctx.shadowBlur=0;
@@ -437,8 +459,9 @@ function frame(now){
   if(planned!=null&&!board[planned]&&!over){const[x,y]=P(nodes[planned].x,nodes[planned].y);ctx.setLineDash([3,4]);ctx.strokeStyle=queue[0]===ETER?'#fff':COL[queue[0]];
     ctx.globalAlpha=.4+.3*Math.sin(now/250);ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(x,y,er*.8,0,7);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1}
   board.forEach((e,n)=>{if(!e)return;const[x,y]=P(e.x,e.y);drawEl(ctx,x,y,er*e.s,e.lv,e.a,now);
+    if(decay&&e.id===decay.id){ctx.strokeStyle='#ff5a5a';ctx.globalAlpha=.5+.5*Math.sin(now/120);ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,er*1.25,0,7);ctx.stroke();ctx.globalAlpha=1}
     if(n===swapA){ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,er*1.2,0,7);ctx.stroke()}});
-  if(mode){ctx.fillStyle='#f3d79a';ctx.font='13px Georgia';ctx.textAlign='center';ctx.fillText(mode==='swap'?'Transmutation: pick two fields':'Purification: pick an element',W/2,OY+S*(rc/2+1)+22)}
+  if(mode){ctx.fillStyle='#f3d79a';ctx.font='13px Georgia';ctx.textAlign='center';ctx.fillText(mode==='swap'?'Transmutation: pick two fields':'Purification: pick a Slag',W/2,OY+S*(rc/2+1)+22)}
   floats=floats.filter(f=>{const t=(now-f.t0)/900;if(t>1)return false;const[x,y]=P(f.x,f.y);ctx.globalAlpha=1-t;ctx.fillStyle='#fff';ctx.font='bold 14px Georgia';ctx.textAlign='center';ctx.fillText(f.t,x,y-er-10-t*30);ctx.globalAlpha=1;return true});
   {const st=Math.max(0,1-(now-sflash)/(sflashT>=4?1400:700));if(st>0){const g=ctx.createRadialGradient(W/2,OY,0,W/2,OY,Math.max(W,H)*.7);
     g.addColorStop(0,`rgba(255,240,200,${.45*st})`);g.addColorStop(1,`rgba(183,124,255,${.12*st})`);ctx.fillStyle=g;ctx.fillRect(0,0,W,H)}}
@@ -466,7 +489,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.11.0';
+const VER='0.12.0';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
