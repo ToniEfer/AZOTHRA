@@ -166,7 +166,7 @@ async function startOpus(){opus=true;circ=2;trophies=3;board=Array(N).fill(null)
   qci=[0,1,2].map(()=>Math.random()*3|0);queue=[gen(),gen(),gen()];planned=null;ui();await playOpusIntro();
   const far=[...nodes.keys()].filter(i=>!inTri(i)&&!isNode(i)).sort(()=>Math.random()-.5);const pick=[];for(const n of far){if(pick.every(p=>Math.hypot(nodes[p].x-nodes[n].x,nodes[p].y-nodes[n].y)>1))pick.push(n);if(pick.length===3)break}
   pick.forEach(n=>board[n]=el(REBIS,n));for(let i=0;i<OPUS.st;i++){qci.length||qci.push(Math.random()*3|0);spawn(true)}planned=pickNode(queue[0]);calcEnt();ui();celebrate('opus_start');flush()}
-async function opusWin(){const T=TRIN().map(n=>board[n]);celebrate('azoth');tone(130.8,2,.08);tone(196,2,.06);
+async function opusWin(){const T=TRIN().map(n=>board[n]);tone(130.8,2,.08);tone(196,2,.06);
   const st=T.map(e=>[e.x,e.y]);await tween(1200,t=>{const q=ease(t);T.forEach((e,i)=>{e.x=st[i][0]*(1-q);e.y=st[i][1]*(1-q);e.s=1+q*.6})});
   score+=10000*CM();busy=false;await finale()}
 async function finale(){over=true;opus=false;META.azoth=1;saveMeta();await playFinale();}
@@ -215,11 +215,11 @@ function runEv({id,d,t},first){const[,ti,su]=EV[id];const fill=x=>x.replace('{el
   if(t>=2)flash=performance.now();
   if(t>=3){sflash=performance.now();sflashT=t;[0,1,2].forEach(i=>setTimeout(()=>tone(130.8*[1,1.5,2][i],1.6,.07),i*120));buzz(t>=4?[60,60,60,60,120]:[40,40,60])}
 }
-const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3,"athanor":1};
+const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3,"athanor":2,"rebis1":1,"rebis2":1,"rebis3":1,"opus_start":1,"azoth":1};
 const VBUF={};
 function loadV(k){if(!VBUF[k])VBUF[k]=fetch(`voice/${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AC.decodeAudioData(b,res,rej))).catch(()=>{delete VBUF[k];return null});return VBUF[k]}
 function preloadVoices(){if(!AC)return;Object.entries(VFILES).forEach(([id,n])=>{for(let i=1;i<=n;i++)loadV(VOICE+'/'+id+'_'+i)})}
-const VALIAS={trophy_3:'new_12',azoth:'ascension',rite:'athanor'};
+const VALIAS={trophy_3:'new_12',rite:'athanor'};
 function voice(id,t){id=VALIAS[id]||id;const n=VFILES[id]||0;if(!n||!VOX||!AC)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
   if(AC.state==='suspended')AC.resume();
   loadV(VOICE+'/'+id+'_'+(1+(Math.random()*n|0))).then(buf=>{if(!buf)return;const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=1;s.buffer=buf;s.connect(g).connect(AC.destination);s.start()})}
@@ -535,7 +535,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.15.0';
+const VER='0.15.1';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
