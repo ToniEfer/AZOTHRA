@@ -189,7 +189,7 @@ const EV={start_first:[2,'Welcome, wanderer','turn a circle · join two alike',2
 const NEWT=[0,0,0,0,1,1,2,0],DISCT=[0,0,1,1,2,2,3,0];
 for(let g=2;g<=21;g++){const lv=gLv(g);if(lv<2)continue;const k=String(g).padStart(2,'0');EV['new_'+k]=[NEWT[lv],'New element',gName(g),2];EV['discover_'+k]=[DISCT[lv],'Discovery',gName(g)+' · added to the Book',2]}
 EV.trophy_1=[4,'BLACK SUN','the first circle is complete · NIGREDO',1];EV.trophy_2=[4,'GOLD','the second circle is complete · ALBEDO',1];EV.trophy_3=[4,'MONAD','the third circle is complete · RUBEDO',1];
-EV.azoth=[4,'AZOTH','the Great Work is complete',1];EV.essence=[1,'Essence ✦','the Trinity Knot condenses spirit',0];EV.rite=[2,'The Rite','unite two {el} in the golden triangle · 1 Essence',0];EV.rite_done=[3,'The Rite is fulfilled','',0];EV.stag_warn=[1,'Stillness approaches','one more move without a union',0];EV.eclipse_warn=[1,'Eclipse approaches','the dashed circle will fall asleep',0];EV.decay_warn=[1,'Dissolution','{el} begins to crumble',0];EV.decay=[1,'Decay','{el} lost a level',0];EV.eclipse=[1,'Eclipse','a circle falls asleep',0];
+EV.azoth=[4,'AZOTH','the Great Work is complete',1];EV.essence=[1,'Essence ✦','the Trinity Knot condenses spirit',0];EV.rite=[3,'The Athanor awakens','the final element is born only here · unite two {el} in the golden triangle · 1 ✦',1];EV.rite_done=[3,'The Rite is fulfilled','',0];EV.stag_warn=[1,'Stillness approaches','one more move without a union',0];EV.eclipse_warn=[1,'Eclipse approaches','the dashed circle will fall asleep',0];EV.decay_warn=[1,'Dissolution','{el} begins to crumble',0];EV.decay=[1,'Decay','{el} lost a level',0];EV.eclipse=[1,'Eclipse','a circle falls asleep',0];
 [['adept',1],['mistyk',2],['wtajemniczony',3],['mag',4],['arcymistrz',5]].forEach(([k,i])=>EV['rank_'+k]=[i===5?4:3,'Degree: '+RANKS[i].n,'new gift: '+GIFTS[i-1].n,2]);
 [1,5,10,25,50,100].forEach(t=>EV['score_'+t+'k']=[1,t*1000+' points','',1]);
 let META;try{META=JSON.parse(localStorage.getItem('azothra_meta'))||{}}catch(e){META={}}
@@ -204,11 +204,11 @@ function runEv({id,d,t},first){const[,ti,su]=EV[id];const fill=x=>x.replace('{el
   if(t>=2)flash=performance.now();
   if(t>=3){sflash=performance.now();sflashT=t;[0,1,2].forEach(i=>setTimeout(()=>tone(130.8*[1,1.5,2][i],1.6,.07),i*120));buzz(t>=4?[60,60,60,60,120]:[40,40,60])}
 }
-const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3};
+const VFILES={"ascension":1,"chain2":2,"chain3":2,"chain4":1,"danger":3,"new_12":1,"over":3,"over_best":2,"rank_adept":2,"rank_arcymistrz":1,"rank_mag":1,"rank_mistyk":1,"rank_wtajemniczony":1,"revelation":3,"saved":3,"start":3,"start_first":2,"trinity":4,"trinity_first":1,"trinity_node":3,"athanor":2};
 const VBUF={};
 function loadV(k){if(!VBUF[k])VBUF[k]=fetch(`voice/${k}.mp3`).then(r=>{if(!r.ok)throw 0;return r.arrayBuffer()}).then(b=>new Promise((res,rej)=>AC.decodeAudioData(b,res,rej))).catch(()=>{delete VBUF[k];return null});return VBUF[k]}
 function preloadVoices(){if(!AC)return;Object.entries(VFILES).forEach(([id,n])=>{for(let i=1;i<=n;i++)loadV(VOICE+'/'+id+'_'+i)})}
-const VALIAS={trophy_3:'new_12',azoth:'ascension'};
+const VALIAS={trophy_3:'new_12',azoth:'ascension',rite:'athanor'};
 function voice(id,t){id=VALIAS[id]||id;const n=VFILES[id]||0;if(!n||!VOX||!AC)return;const now=performance.now();if(t<3&&now-lastVoice<4000)return;lastVoice=now;
   if(AC.state==='suspended')AC.resume();
   loadV(VOICE+'/'+id+'_'+(1+(Math.random()*n|0))).then(buf=>{if(!buf)return;const s=AC.createBufferSource(),g=AC.createGain();g.gain.value=1;s.buffer=buf;s.connect(g).connect(AC.destination);s.start()})}
@@ -330,7 +330,7 @@ const DESC=['','The smallest grain of matter. Every path begins with it.','The w
 function showBook(){const B=$('book');B.innerHTML='';const disc=Math.max(META.disc||2,circ*7+hi);
   const card=(ic,html,got)=>{const d=document.createElement('div');d.className='st '+(got?'done':'lock');d.appendChild(ic);const t=document.createElement('div');t.innerHTML=html;d.appendChild(t);B.appendChild(d)};
   CIRC.forEach((C,ci)=>{const h=document.createElement('h3');h.className='bh';h.innerHTML=`CIRCLE ${C.id} · ${C.name}<small>${C.sub}</small>`;B.appendChild(h);
-    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):lv===7?`The Rite: 2× ${nm(6,ci)} in the central triangle · 1 ✦`:lv===6?`2× ${nm(5,ci)} (no Trinity)`:`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}${lv===5?' or 3× '+nm(4,ci):''}`;
+    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):lv===7?`The Rite: 2× ${nm(6,ci)} in the Athanor (central triangle) · 1 ✦`:lv===6?`2× ${nm(5,ci)} (no Trinity)`:`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}${lv===5?' or 3× '+nm(4,ci):''}`;
       card(mini(lv,40,ci),`<b>${E[0]}</b><small>${C.id} · ${lv}</small><span class="d">${got?E[3]:'— not yet discovered —'}</span><span>${how}${lv===7?' · trophy':''}</span>`,got)})});
   const h=document.createElement('h3');h.className='bh';h.innerHTML='THE GREAT WORK';B.appendChild(h);
   card(mini(99,40),`<b>${AZOTH[0]}</b><small>22</small><span class="d">${META.azoth?AZOTH[3]:'— not yet discovered —'}</span><span>Black Sun + Gold + Monad</span>`,!!META.azoth);
@@ -342,7 +342,7 @@ function showPath(){$('bookM').style.display='none';const P=$('path');P.innerHTM
     t.innerHTML=`<b>${i+1}. ${r.n}</b><span>${i?'threshold: '+gName(r.lv)+' (circle '+CIRC[gCi(r.lv)].id+')':'start'}${i===rankIdx?' · <i>current</i>':''}</span><span>${g?'gift: '+g.n+' — '+g.d:'no gift'}</span>`;
     d.appendChild(t);P.appendChild(d)});
   const f=document.createElement('div');f.className='st';f.appendChild(mini(99,40));const t=document.createElement('div');
-  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · each circle ends with its trophy · the three trophies unite into Azoth, the Philosopher\'s Stone</span><span>Trinity: 3 in a row = +2 levels (up to level 5) · the 7th element needs the Rite: two 6th elements united in the central triangle (glows gold) · 1 ✦</span><span>Essence ✦ (max 5): Trinity Knot, every 3rd Trinity, chain ≥3, new degree · pays for gifts, Reversal and the Rite</span><span>Stillness: too many moves without a union ends the game (5/5/4, once the board is 35% full) · Entropy ≥40 Turbulence (more Slag) · ≥70 Dissolution (elements decay, circles II–III)</span>';
+  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · each circle ends with its trophy · the three trophies unite into Azoth, the Philosopher\'s Stone</span><span>Trinity: 3 in a row = +2 levels (up to level 5) · the 7th element is born only in the Athanor — the central triangle, glowing gold once two 6th elements exist · unite them there · 1 ✦</span><span>Essence ✦ (max 5): Trinity Knot, every 3rd Trinity, chain ≥3, new degree · pays for gifts, Reversal and the Rite</span><span>Stillness: too many moves without a union ends the game (5/5/4, once the board is 35% full) · Entropy ≥40 Turbulence (more Slag) · ≥70 Dissolution (elements decay, circles II–III)</span>';
   f.appendChild(t);P.appendChild(f);$('pathM').style.display='flex'}
 function vision(btn){if(over)return;const r=btn.getBoundingClientRect(),sz=44,c=mini(queue[0],sz);c.className='vfly';
   c.style.left=(r.left+r.width/2-sz/2)+'px';c.style.top=(r.top-6)+'px';c.style.transform='translateY(10px) scale(.4)';c.style.opacity='1';document.body.appendChild(c);
@@ -452,7 +452,8 @@ function frame(now){
    rings.forEach((r,i)=>{const[x,y]=P(r.cx,r.cy);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.stroke();
    const[cx,cy]=P(0,0);ctx.beginPath();ctx.arc(cx,cy,S*rc*.5,0,7);ctx.stroke();
    if(rr){ctx.globalAlpha=.12+.14*pu;ctx.fillStyle='#ffd25a';ctx.beginPath();rings.forEach((r,i)=>{const[x,y]=P(r.cx,r.cy);i?ctx.lineTo(x,y):ctx.moveTo(x,y)});ctx.closePath();ctx.fill();
-    ctx.globalAlpha=.6+.4*pu;nodes.forEach((n,i)=>{if(!inTri(i))return;const[x,y]=P(n.x,n.y);ctx.strokeStyle='#ffd25a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,S*.21*1.18,0,7);ctx.stroke()})}ctx.shadowBlur=0}
+    ctx.globalAlpha=.6+.4*pu;nodes.forEach((n,i)=>{if(!inTri(i))return;const[x,y]=P(n.x,n.y);ctx.strokeStyle='#ffd25a';ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,S*.21*1.18,0,7);ctx.stroke()});
+    {const[,ty]=P(0,rings[1].cy);ctx.globalAlpha=.75+.25*pu;ctx.fillStyle='#ffd25a';ctx.font='bold 12px Georgia';ctx.textAlign='center';ctx.fillText('A T H A N O R',cx,ty+22)}}ctx.shadowBlur=0}
   ctx.globalAlpha=1;
   const er=S*.21;
   nodes.forEach((n,i)=>{const[x,y]=P(n.x,n.y);ctx.fillStyle=n.rings.length>1?'#f3d79a':'#6b5e93';ctx.globalAlpha=n.rings.length>1?.7:.5;
@@ -492,7 +493,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.13.0';
+const VER='0.14.0';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
