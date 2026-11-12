@@ -172,10 +172,10 @@ async function finale(){over=true;clearSave();opus=false;META.azoth=1;saveMeta()
 // ===== Reguły =====
 const canMerge0=(a,b)=>a&&b&&a.lv!==SLAG&&b.lv!==SLAG&&a.lv!==REBIS&&b.lv!==REBIS&&((a.lv===b.lv&&a.lv>0&&a.ci===b.ci)||((a.lv===ETER)!==(b.lv===ETER)));
 function dissolve(n){for(const m of adj[n]){const e=board[m];if(e&&e.lv===SLAG){board[m]=null;tween(300,t=>{e.s=1-t;e.a=1-t}).then(()=>{});floats.push({x:e.x,y:e.y,t:'dissolved',t0:performance.now()});tone(330,.3,.04)}}}
-// Rytuał: dwa elementy poziomu 6 łączą się tylko w Atanorze (3 wewnętrzne węzły), koszt 1 ✦; Aether nie zastępuje rytuału
+// Rytuał: dwa elementy poziomu 6 łączą się tylko gdy OBA stoją w Atanorze (na 2 z 3 wewnętrznych węzłów), koszt 1 ✦; Aether nie zastępuje rytuału
 const isNode=n=>nodes[n].rings.length>1;let TRI=null;const TRIN=()=>{inTri(0);return[...TRI]};const inTri=n=>(TRI||(TRI=new Set(nodes.map((p,i)=>Math.hypot(p.x,p.y)<.5?i:-1).filter(i=>i>=0)))).has(n);
 const riteReady=()=>opus||board&&board.filter(x=>x&&x.lv===RITE_LV).length>=2;
-function pairOK(b,a,c){const A=b[a],C=b[c];if(!canMerge0(A,C))return false;if(opus&&(A.lv===ETER?C.lv:A.lv)>=RITE_LV)return false;if((A.lv===ETER?C.lv:A.lv)>=RITE_LV){if(A.lv===ETER||C.lv===ETER)return false;return ess>=1&&(inTri(a)||inTri(c))}return true}
+function pairOK(b,a,c){const A=b[a],C=b[c];if(!canMerge0(A,C))return false;if(opus&&(A.lv===ETER?C.lv:A.lv)>=RITE_LV)return false;if((A.lv===ETER?C.lv:A.lv)>=RITE_LV){if(A.lv===ETER||C.lv===ETER)return false;return ess>=1&&inTri(a)&&inTri(c)}return true}
 const canMerge=canMerge0;
 function findPair(b,last,active){const ord=[];if(last!=null)ord.push(last);active.forEach(n=>ord.push(n));for(let n=0;n<N;n++)ord.push(n);
   for(const a of ord)for(const c of adj[a])if(pairOK(b,a,c))return[a,c];return null}
@@ -286,7 +286,7 @@ function makePlan(){plan=[];const b=board.slice(),D=opus?OPUS:DIFF[circ],x=D.x0+
     let n=null;if(DIRON){const d=director(b,lv,ci,D,resc);if(d){lv=d.lv;n=d.n;if(d.r)resc=true}}if(n==null)n=pickNode(lv,ci,b);if(n==null){plan.push({lv,ci,n:-1});break}b[n]={lv,ci};plan.push({lv,ci,n});
     if(Math.random()<ps){const em=[];for(let j=0;j<N;j++)if(!b[j])em.push(j);if(em.length>3){const m=em[Math.random()*em.length|0];b[m]={lv:SLAG};plan.push({lv:SLAG,ci,n:m})}}}
   rStreak=resc?rStreak+1:0}
-let overflow=false;async function doSpawn(){const sp=new Set();for(const p of plan){let n=p.n;if(n<0){overflow=true;continue}if(board[n]){if(p.lv===SLAG)continue;n=pickNode(p.lv,p.ci);if(n==null){overflow=true;continue}}
+let overflow=false;async function doSpawn(){const sp=new Set();for(const p of plan){let n=p.n;if(n<0){n=pickNode(p.lv,p.ci);if(n==null){overflow=true;continue}}else if(board[n]){if(p.lv===SLAG)continue;n=pickNode(p.lv,p.ci);if(n==null){overflow=true;continue}}
     const e=el(p.lv,n,p.ci);e.s=0;board[n]=e;tween(220,t=>e.s=ease(t));if(p.lv!==SLAG)sp.add(n)}plan=[];if(!sp.size)return 0;await wait(240);return resolve(sp)}
 async function move(r,dir){if(busy||over)return;if(r===lockRing){tone(110,.25,.06);buzz(30);floats.push({x:rings[r].cx,y:rings[r].cy,t:'eclipsed',t0:performance.now()});return}save();busy=true;cm++;mode=null;swapA=null;buzz(6);whoosh();
   const R=rings[r],items=[];R.slots.forEach((n,k)=>{if(board[n])items.push({e:board[n],k})});
@@ -370,7 +370,7 @@ function ui(){$('undo').disabled=!hist.length||ess<1;$('undo').textContent='↶ 
 function showBook(){const B=$('book');B.innerHTML='';const disc=Math.max(META.disc||2,circ*7+hi);
   const card=(ic,html,got)=>{const d=document.createElement('div');d.className='st '+(got?'done':'lock');d.appendChild(ic);const t=document.createElement('div');t.innerHTML=html;d.appendChild(t);B.appendChild(d)};
   CIRC.forEach((C,ci)=>{const h=document.createElement('h3');h.className='bh';h.innerHTML=`CIRCLE ${C.id} · ${C.name}<small>${C.sub}</small>`;B.appendChild(h);
-    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):lv===7?`The Rite: 2× ${nm(6,ci)} in the Athanor (central triangle) · 1 ✦`:lv===6?`2× ${nm(5,ci)} · Trinity: 3× ${nm(4,ci)} or 3× ${nm(5,ci)}`:`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}`;
+    C.el.forEach((E,i)=>{const lv=i+1,G=ci*7+lv,got=G<=disc;const how=lv===1?'appears on the board':lv===2?'2× '+nm(1,ci):lv===7?`The Rite: 2× ${nm(6,ci)}, both inside the Athanor (central triangle) · 1 ✦`:lv===6?`2× ${nm(5,ci)} · Trinity: 3× ${nm(4,ci)} or 3× ${nm(5,ci)}`:`2× ${nm(lv-1,ci)} · Trinity: 3× ${nm(lv-2,ci)}`;
       card(mini(lv,40,ci),`<b>${E[0]}</b><small>${C.id} · ${lv}</small><span class="d">${got?E[3]:'— not yet discovered —'}</span><span>${how}${lv===7?' · trophy':''}</span>`,got)})});
   const h=document.createElement('h3');h.className='bh';h.innerHTML='THE GREAT WORK';B.appendChild(h);
   card(mini(99,40),`<b>${AZOTH[0]}</b><small>22</small><span class="d">${META.azoth?AZOTH[3]:'— not yet discovered —'}</span><span>three Rebis united in the Athanor</span>`,!!META.azoth);
@@ -383,7 +383,7 @@ function showPath(){$('bookM').style.display='none';const P=$('path');P.innerHTM
     t.innerHTML=`<b>${i+1}. ${r.n}</b><span>${i?'threshold: '+gName(r.lv)+' (circle '+CIRC[gCi(r.lv)].id+')':'start'}${i===rankIdx?' · <i>current</i>':''}</span><span>${g?'gift: '+g.n+' — '+g.d:'no gift'}</span>`;
     d.appendChild(t);P.appendChild(d)});
   const f=document.createElement('div');f.className='st';f.appendChild(mini(99,40));const t=document.createElement('div');
-  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · the three trophies give one Rebis · walk the journey three times to gather 3 Rebis · then the Final Work: bring the three Rebis into the Athanor to create Azoth, the Philosopher\'s Stone</span><span>Two alike side by side always unite · Trinity: three alike = +2 levels (up to level 6) · the 7th element is born only in the Athanor — the central triangle, glowing gold once two 6th elements exist · unite them there · 1 ✦</span><span>Essence ✦ (max 5): Trinity Knot, every 3rd Trinity, chain ≥3, new degree · pays for gifts, Reversal and the Rite</span><span>Ghosts on the board show what falls next and where · the game ends only when the board is full and no turn can unite anything</span>';
+  t.innerHTML='<b>Goal: Azoth</b><span>3 circles · 7 elements each · the three trophies give one Rebis · walk the journey three times to gather 3 Rebis · then the Final Work: bring the three Rebis into the Athanor to create Azoth, the Philosopher\'s Stone</span><span>Two alike side by side always unite · Trinity: three alike = +2 levels (up to level 6) · the 7th element is born only in the Athanor — the central triangle, glowing gold once two 6th elements exist · both must stand inside it to unite · 1 ✦</span><span>Essence ✦ (max 5): Trinity Knot, every 3rd Trinity, chain ≥3, new degree · pays for gifts, Reversal and the Rite</span><span>Ghosts on the board show what falls next and where · the game ends only when the board is full and no turn can unite anything</span>';
   f.appendChild(t);P.appendChild(f);$('pathM').style.display='flex'}
 function vision(btn){if(over)return;const r=btn.getBoundingClientRect(),sz=44,c=mini(queue[0],sz,opus?qci[0]:circ);c.className='vfly';
   c.style.left=(r.left+r.width/2-sz/2)+'px';c.style.top=(r.top-6)+'px';c.style.transform='translateY(10px) scale(.4)';c.style.opacity='1';document.body.appendChild(c);
@@ -560,7 +560,7 @@ $('sNew').onclick=()=>{$('setM').style.display='none';if(over)reset();else if(!b
 $('again').onclick=reset;$('undo').onclick=()=>{undo();celebrate('undo')};$('ovUndo').onclick=()=>{undo();celebrate('over_undo')};
 $('cNo').onclick=()=>$('conf').style.display='none';$('cYes').onclick=()=>{$('conf').style.display='none';celebrate('restart');reset()};
 $('rank').onclick=showPath;$('ladder').onclick=showBook;$('bClose').onclick=()=>$('bookM').style.display='none';$('bPath').onclick=showPath;$('pBook').onclick=showBook;$('pClose').onclick=()=>$('pathM').style.display='none';
-const VER='0.17.1';
+const VER='0.17.2';
 addEventListener('resize',resize);
 {const TL=['S','M','L','XL','XXL'];
  function testUI(){$('tvm').className='g'+(VOICE==='m'?' on':'');$('tvf').className='g'+(VOICE==='f'?' on':'');
